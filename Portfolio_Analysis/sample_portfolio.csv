@@ -1,0 +1,13 @@
+pharmacy_name,owner_name,city,state,monthly_rx_volume,glp1_monthly_fills,gov_payer_pct,pms_system,num_technicians,dir_fee_pressure,dispenses_mfp_drugs,owner_engagement,aware_of_underwater_rx,lost_patients_to_mail_order,mfp_weekly_transactions,competitors_nearby,years_in_business
+Walker's Family Pharmacy,Wyatt Walker PharmD,Livonia,LA,5200,420,65,PioneerRx,4,severe,Yes,high,Yes,Yes,12,2,22
+HealthFirst Pharmacy,Maria Chen RPh,Baton Rouge,LA,4800,310,55,Liberty Software,3,moderate,Yes,high,Yes,No,8,3,15
+Main Street Drug,Tom Bradley,Shreveport,LA,1800,95,30,Rx30,1,mild,No,low,No,No,0,4,8
+Bayou Pharmacy,Claire Fontenot PharmD,Lafayette,LA,6200,480,70,PioneerRx,5,severe,Yes,high,Yes,Yes,15,1,30
+Capital City Rx,James Washington RPh,Jackson,MS,3500,220,45,PrimeRx,2,moderate,Yes,medium,Yes,No,6,3,12
+Delta Prescription Center,Robert Lee PharmD,Greenville,MS,2200,140,50,Other,2,moderate,Yes,medium,No,Yes,4,2,18
+Gulf Coast Pharmacy,Sandra Mitchell RPh,Biloxi,MS,4100,290,60,Liberty Software,3,severe,Yes,high,Yes,Yes,10,2,20
+Magnolia Drug,Patricia Williams,Hattiesburg,MS,2800,175,40,Rx30,2,mild,No,medium,Yes,No,0,3,25
+Pine Belt Rx,David Johnson PharmD,Laurel,MS,1500,80,25,Other,1,mild,No,low,No,No,0,5,5
+Crescent Pharmacy,Nicole Tran PharmD,New Orleans,LA,7500,580,75,PioneerRx,6,severe,Yes,high,Yes,Yes,20,1,18
+Pelican Health Pharmacy,Andre Dupree RPh,Lake Charles,LA,3900,260,50,PrimeRx,3,moderate,Yes,medium,Yes,No,7,2,14
+Rivertown Apothecary,Susan Garcia PharmD,Natchez,MS,3200,200,55,Liberty Software,2,moderate,Yes,high,Yes,Yes,5,1,35
