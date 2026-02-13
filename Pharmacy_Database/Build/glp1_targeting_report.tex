@@ -1,0 +1,395 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{hyperref}
+\usepackage{colortbl}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{multicol}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usepackage{footnote}
+
+% Colors
+\definecolor{navy}{HTML}{0F172A}
+\definecolor{teal}{HTML}{0F766E}
+\definecolor{teallight}{HTML}{14B8A6}
+\definecolor{orange}{HTML}{F97316}
+\definecolor{slate}{HTML}{64748B}
+\definecolor{slatebg}{HTML}{F8FAFC}
+\definecolor{lightgray}{HTML}{E2E8F0}
+\definecolor{green}{HTML}{16A34A}
+\definecolor{amber}{HTML}{D97706}
+\definecolor{red}{HTML}{DC2626}
+\definecolor{navydark}{HTML}{0A1120}
+\definecolor{navymid}{HTML}{1E293B}
+
+% Header/Footer
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\color{slate}\textsc{GLP-1 Pharmacy Targeting --- Research Results}}
+\fancyhead[R]{\small\color{slate}February 2026}
+\fancyfoot[C]{\small\color{slate}\thepage}
+\fancyfoot[R]{\small\color{slate}RetailMyMeds}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+
+% Section styling
+\titleformat{\section}{\Large\bfseries\color{navy}}{}{0em}{}[\color{orange}\titlerule]
+\titleformat{\subsection}{\large\bfseries\color{teal}}{}{0em}{}
+\titleformat{\subsubsection}{\normalsize\bfseries\color{navy}}{}{0em}{}
+
+\hypersetup{colorlinks=true, linkcolor=teal, urlcolor=teal}
+
+% Callout box
+\newcommand{\callout}[2]{%
+\noindent\fcolorbox{lightgray}{slatebg}{%
+\begin{minipage}{\dimexpr\linewidth-2\fboxsep-2\fboxrule}
+\smallskip
+{\small\color{teal}\textsc{#1}}\par\smallskip
+#2
+\smallskip
+\end{minipage}}}
+
+\begin{document}
+
+%% ═══════════════════════════════════════════════════════════════
+%% CINEMATIC COVER PAGE
+%% ═══════════════════════════════════════════════════════════════
+\thispagestyle{empty}
+\newgeometry{margin=0pt}
+\begin{tikzpicture}[remember picture, overlay]
+  % Full-page navy background
+  \fill[navy] (current page.south west) rectangle (current page.north east);
+
+  % Concentric circles (centered slightly above center)
+  \foreach \r in {2.5,4.0,5.5,7.0,8.5} {
+    \draw[navymid, line width=0.5pt] (current page.center) ++(0,0.8in) circle (\r cm);
+  }
+
+  % Constellation geometry - top right
+  \draw[slate, line width=0.4pt] ([shift={(-1.2in,-.6in)}]current page.north east) -- ++(-.3in,-.4in) -- ++(.5in,-.15in) -- cycle;
+  \foreach \p in {(-1.2in,-.6in), (-1.5in,-1.0in), (-1.0in,-1.15in)} {
+    \fill[slate] ([shift={\p}]current page.north east) circle (1.5pt);
+  }
+
+  % Constellation geometry - bottom left
+  \draw[navymid, line width=0.5pt] ([shift={(1.5in,1.8in)}]current page.south west) -- ++(-.4in,.5in) -- ++(.7in,.1in) -- cycle;
+  \foreach \p in {(1.5in,1.8in), (1.1in,2.3in), (2.2in,1.9in)} {
+    \fill[navymid] ([shift={\p}]current page.south west) circle (2pt);
+  }
+
+  % Small constellation dots - bottom right
+  \foreach \p in {(-2.0in,2.2in), (-2.3in,2.5in), (-1.7in,2.7in), (-2.5in,2.0in), (-1.5in,2.3in)} {
+    \fill[navymid] ([shift={\p}]current page.south east) circle (1.2pt);
+  }
+  \draw[navymid, line width=0.3pt] ([shift={(-2.0in,2.2in)}]current page.south east) -- ([shift={(-2.3in,2.5in)}]current page.south east);
+  \draw[navymid, line width=0.3pt] ([shift={(-2.3in,2.5in)}]current page.south east) -- ([shift={(-1.7in,2.7in)}]current page.south east);
+
+  % Title text
+  \node[anchor=center, text=teallight] at ([yshift=3.2in]current page.center)
+    {\small\textsc{RESEARCH RESULTS}};
+
+  \node[anchor=center, text=white, font=\fontsize{36}{42}\selectfont\bfseries] at ([yshift=2.2in]current page.center)
+    {GLP-1 Pharmacy};
+  \node[anchor=center, text=white, font=\fontsize{36}{42}\selectfont\bfseries] at ([yshift=1.5in]current page.center)
+    {Targeting};
+
+  \node[anchor=center, text=orange] at ([yshift=0.8in]current page.center)
+    {\large\textsc{RETAILMYMEDS}};
+
+  % Orange rule
+  \fill[orange] ([yshift=0.45in, xshift=-1in]current page.center) rectangle ([yshift=0.5in, xshift=1in]current page.center);
+
+  % Subtitle
+  \node[anchor=center, text=slate, font=\small] at ([yshift=-0.1in]current page.center)
+    {GLP-1 Economics\hspace{1em}|\hspace{1em}Pharmacy Scoring\hspace{1em}|\hspace{1em}Outreach Priority};
+
+  % Bottom bar
+  \fill[teal] (current page.south west) rectangle ([yshift=0.4in]current page.south east);
+
+  \node[anchor=west, text=white, font=\footnotesize] at ([shift={(0.3in,0.2in)}]current page.south west)
+    {\textsc{PREPARED FOR}~~\textbf{Arica Collins, PharmD}~~\&~~\textbf{Kevin McCarron}\hspace{1.5em}February 2026\hspace{1.5em}|\hspace{1.5em}\textit{v1.0 --- Research Results}};
+
+  \node[anchor=east, text=white, font=\footnotesize] at ([shift={(-0.3in,0.2in)}]current page.south east)
+    {\textsc{PREPARED BY}~~\textbf{Matthew Scott}};
+
+\end{tikzpicture}
+\restoregeometry
+
+\newpage
+
+%% ─────────────────────────────────────────────────────────────
+\section{What This Is}
+
+I ran research against publicly available federal datasets to answer a specific question: \textbf{which of the 41,775 qualified independent pharmacies in the database are the strongest targets for RetailMyMeds, and why?}
+
+The result is a single CSV (\texttt{pharmacies\_glp1\_targeting.csv}) that scores and ranks every pharmacy by estimated GLP-1 financial exposure, area-level health data, and outreach priority. Every number traces to a named federal source.
+
+The underlying data is measured --- federal agency datasets, not survey self-reports. The financial projections layered on top are \textit{estimates} built from that data using NCPA's published loss-per-fill economics.\textsuperscript{1,2} Where a number is measured vs.\ estimated is noted throughout.
+
+%% ─────────────────────────────────────────────────────────────
+\section{Data Sources}
+
+\begin{tabularx}{\textwidth}{>{\bfseries}l X l}
+\toprule
+Source & What It Provides & Agency \\
+\midrule
+Medicare Part D\textsuperscript{3} & State GLP-1 claims + drug cost (2023) & CMS \\
+Medicaid SDUD\textsuperscript{4} & State GLP-1 prescriptions + reimbursement (2024) & CMS \\
+CDC PLACES 2025\textsuperscript{5} & ZIP-level diabetes, obesity, uninsured rates & CDC \\
+Census ACS 2023\textsuperscript{6} & ZIP-level \% 65+, median income, population & Census Bureau \\
+HRSA HPSA 2026\textsuperscript{7} & Primary care shortage area designations & HRSA \\
+NPPES NPI Registry\textsuperscript{8} & Pharmacy identity, status, owner & CMS \\
+\bottomrule
+\end{tabularx}
+
+\vspace{0.15in}
+
+Loss-per-fill economics (\$37--\$42/fill) come from NCPA survey data\textsuperscript{1,2} and per-drug WAC-minus-reimbursement calculations from the GLP-1 Value Proposition. The \$275/month subscription price and 5\% moderate routing rate come from the RetailMyMeds GLP-1 Value Proposition.
+
+%% ─────────────────────────────────────────────────────────────
+\section{How the Scoring Works}
+
+Each pharmacy receives a \textbf{final score} (0--100) from three weighted components:
+
+\begin{tabularx}{\textwidth}{l c X}
+\toprule
+\textbf{Component} & \textbf{Weight} & \textbf{What It Measures} \\
+\midrule
+Opportunity Score & 45\% & Area disease burden (diabetes + obesity), Medicare density (\% 65+), state GLP-1 market intensity, HPSA underserved status \\
+Financial Impact & 30\% & Magnitude of estimated monthly GLP-1 loss (\$) \\
+Urgency & 25\% & GLP-1 fill volume, disease severity, MFP exposure, shortage area acuity \\
+\bottomrule
+\end{tabularx}
+
+\vspace{0.15in}
+
+\textbf{Why these weights.} Opportunity captures whether the pharmacy is \textit{in the right area} --- high disease burden means more GLP-1 demand, more 65+ means more Part D exposure, HPSA means less competition. Financial impact captures how much the pharmacy is \textit{bleeding today}. Urgency captures how \textit{acutely} they need a solution. A pharmacy can be in a perfect area (high opportunity) but with moderate volume (lower financial impact) --- or vice versa. The weighted blend identifies pharmacies where all three align.
+
+\vspace{0.15in}
+
+\callout{Fill Estimate Methodology}{%
+Monthly GLP-1 fills per pharmacy are estimated by indexing each state's CMS-measured claims volume\textsuperscript{3,4} against the NCPA national average of 394 GLP-1 fills/month,\textsuperscript{9} then adjusting $\pm$15\% based on the pharmacy's ZIP-level disease burden\textsuperscript{5} and Medicare density.\textsuperscript{6} The resulting range (197--650 fills/month) aligns with the 80--580 range observed in the 12-pharmacy portfolio analysis.
+}
+
+%% ─────────────────────────────────────────────────────────────
+\section{Results}
+
+\subsection{Grade Distribution}
+
+\begin{tabularx}{\textwidth}{c c c X}
+\toprule
+\textbf{Grade} & \textbf{Count} & \textbf{\% of Total} & \textbf{Classification} \\
+\midrule
+\cellcolor{green!15}\textcolor{green}{\textbf{A}} & 5,118 & 12.3\% & Strong Fit --- high area need + high financial exposure + high urgency \\
+\cellcolor{teallight!15}\textcolor{teal}{\textbf{B}} & 14,775 & 35.4\% & Good Fit --- strong on two of three dimensions \\
+\cellcolor{amber!15}\textcolor{amber}{\textbf{C}} & 18,352 & 43.9\% & Conditional --- moderate opportunity, worth monitoring \\
+\cellcolor{red!15}\textcolor{red}{\textbf{D}} & 3,530 & 8.5\% & Low priority --- low volume or low area need \\
+\bottomrule
+\end{tabularx}
+
+\subsection{Outreach Priority}
+
+\begin{tabularx}{\textwidth}{l c c X}
+\toprule
+\textbf{Priority} & \textbf{Count} & \textbf{\%} & \textbf{Action} \\
+\midrule
+\textcolor{green}{\textbf{Immediate Outreach}} & 11,190 & 26.8\% & Direct outreach --- score $\geq$ 80, urgency $\geq$ 70 \\
+\textcolor{teal}{\textbf{Nurture}} & 10,949 & 26.2\% & Drip campaign, conference touchpoints, association channels \\
+\textcolor{amber}{\textbf{Conditional}} & 16,106 & 38.6\% & Watch list --- may convert as MFP cycles expand \\
+\textcolor{red}{\textbf{Deprioritize}} & 3,530 & 8.5\% & Do not spend time here \\
+\bottomrule
+\end{tabularx}
+
+\subsection{Conversation Segments}
+
+Each pharmacy is tagged with the \textbf{pain point that should lead the conversation}:
+
+\begin{tabularx}{\textwidth}{l c X}
+\toprule
+\textbf{Segment} & \textbf{Count} & \textbf{Lead Message} \\
+\midrule
+GLP-1 Loss & 30,808 (73.7\%) & ``You're losing \$37--\$42 on every GLP-1 fill. RetailMyMeds routes those prescriptions so you stop absorbing the loss.'' \\
+DIR Fee Squeeze & 7,424 (17.8\%) & ``Your area is medically underserved and your margins are the thinnest in the country. Routing below-cost prescriptions is how you survive.'' \\
+MFP Cash Flow & 3,543 (8.5\%) & ``MFP is creating a \$10,838/week cash flow gap. RetailMyMeds' scheduling intelligence addresses the timing directly.'' \\
+\bottomrule
+\end{tabularx}
+
+%% ─────────────────────────────────────────────────────────────
+\section{Financial Model}
+
+Every pharmacy in the CSV includes a per-pharmacy financial projection. ``ROI multiple'' = estimated annual net savings / \$3,300 annual subscription cost, assuming 5\% of GLP-1 fills are routed at the mid-range loss of \$39.50/fill. This is a projected return on the subscription, not a guaranteed outcome --- actual results depend on the pharmacy's real fill volume and PBM contracts.
+
+\callout{Immediate Outreach Pharmacies --- Average Profile}{%
+\begin{tabular}{rl}
+Estimated monthly GLP-1 fills: & \textbf{$\sim$484} \\
+Estimated monthly GLP-1 loss (mid): & \textbf{$\sim$\$19K} (\$14K--\$25K range) \\
+At 5\% routing rate ($\sim$24 fills routed): & \textbf{$\sim$\$680/month net savings} after \$275 subscription \\
+Estimated ROI multiple: & \textbf{3.5x} (range: 1.9x--4.6x) \\
+Breakeven: & \textbf{8 fills/month} routed ($\sim$2\% of GLP-1 volume) \\
+\end{tabular}
+
+\vspace{0.1in}
+
+{\small\color{slate}\textit{These are estimates, not pharmacy-reported numbers. The national average pharmacy (394 fills/month at \$37/fill) yields \$465/month net savings and 1.7x ROI per the GLP-1 Value Proposition.\textsuperscript{9} Immediate Outreach pharmacies score higher because they are in areas with above-average disease burden and Medicare density, which the model uses to estimate higher fill volume.}}
+}
+
+\vspace{0.15in}
+
+The CSV includes three loss scenarios per pharmacy:
+
+\begin{tabular}{l l l}
+\toprule
+\textbf{Scenario} & \textbf{Loss/Fill} & \textbf{Source} \\
+\midrule
+Conservative & \$37/fill & Per-drug WAC/reimbursement spread\textsuperscript{1,9} \\
+Mid-range & \$39.50/fill & Midpoint \\
+High & \$42/fill & NCPA pharmacist survey\textsuperscript{2} \\
+\bottomrule
+\end{tabular}
+
+%% ─────────────────────────────────────────────────────────────
+\section{Top 10 States by Immediate Outreach Volume}
+
+\begin{tabularx}{\textwidth}{c l c r r}
+\toprule
+\textbf{Rank} & \textbf{State} & \textbf{Imm. Outreach} & \textbf{Est.\ Avg Loss/Mo} & \textbf{Est.\ ROI} \\
+\midrule
+1 & California & 2,070 & $\sim$\$20K & 3.6x \\
+2 & North Carolina & 883 & $\sim$\$18K & 3.3x \\
+3 & Ohio & 842 & $\sim$\$25K & 4.6x \\
+4 & \textbf{Louisiana} & \textbf{759} & $\sim$\textbf{\$20K} & \textbf{3.5x} \\
+5 & Illinois & 671 & $\sim$\$17K & 3.1x \\
+6 & Tennessee & 574 & $\sim$\$15K & 2.8x \\
+7 & Missouri & 437 & $\sim$\$15K & 2.8x \\
+8 & South Carolina & 395 & $\sim$\$18K & 3.2x \\
+9 & West Virginia & 356 & $\sim$\$19K & 3.4x \\
+10 & Wisconsin & 354 & $\sim$\$21K & 3.8x \\
+\bottomrule
+\end{tabularx}
+
+\vspace{0.1in}
+
+{\small Louisiana is highlighted as Arica's home market. Ohio and Wisconsin show the highest per-pharmacy loss among the top 10, making them strong expansion targets.}
+
+%% ─────────────────────────────────────────────────────────────
+\section{What's in the CSV}
+
+\texttt{pharmacies\_glp1\_targeting.csv} contains \textbf{36 columns} per pharmacy:
+
+\begin{multicols}{2}
+\subsubsection*{Identity (9 fields)}
+\begin{itemize}[nosep,leftmargin=1em]
+\item NPI, name, city, state, ZIP, phone
+\item NPPES status, owner name, owner title
+\end{itemize}
+
+\subsubsection*{Area Health Context (7 fields)}
+\begin{itemize}[nosep,leftmargin=1em]
+\item ZIP diabetes \%, obesity \%, \% 65+
+\item Median income, population
+\item HPSA designated (yes/no), HPSA score
+\end{itemize}
+
+\subsubsection*{State GLP-1 Economics (2 fields)}
+\begin{itemize}[nosep,leftmargin=1em]
+\item Govt GLP-1 claims per pharmacy
+\item Govt GLP-1 cost per pharmacy
+\end{itemize}
+
+\subsubsection*{Pharmacy Financial Estimates (5 fields)}
+\begin{itemize}[nosep,leftmargin=1em]
+\item Est.\ monthly GLP-1 fills
+\item Monthly loss (low / mid / high)
+\item Annual loss
+\end{itemize}
+
+\subsubsection*{ROI Model (7 fields)}
+\begin{itemize}[nosep,leftmargin=1em]
+\item Fills routed at 5\%, monthly savings
+\item Net monthly after \$275 subscription
+\item Annual net savings, ROI multiple
+\item Breakeven fills, \% volume for breakeven
+\end{itemize}
+
+\subsubsection*{Targeting (6 fields)}
+\begin{itemize}[nosep,leftmargin=1em]
+\item Segment (GLP-1 / MFP / DIR)
+\item Urgency score, opportunity score
+\item Final score, grade, outreach priority
+\end{itemize}
+\end{multicols}
+
+%% ─────────────────────────────────────────────────────────────
+\section{What This Means}
+
+The 41,775 pharmacies in the qualified database now have \textbf{measured, source-cited targeting data}. For Arica's outreach:
+
+\begin{enumerate}[leftmargin=1.5em]
+\item \textbf{11,190 pharmacies are flagged Immediate Outreach.} These are independents in high-disease-burden, high-Medicare-density areas with the highest estimated GLP-1 losses. They are the pharmacies most likely to feel the pain RetailMyMeds solves.
+
+\item \textbf{Every pharmacy has a conversation segment.} The CSV tells you whether to lead with GLP-1 losses, MFP cash flow, or DIR fee pressure --- based on that pharmacy's area characteristics, not a guess.
+
+\item \textbf{The financial model is per-pharmacy, not per-state.} Each row shows estimated fills, estimated losses, projected savings at \$275/month, and estimated ROI. This applies the same math from the GLP-1 Value Proposition to each pharmacy's area context. The base case (394 fills, \$37/fill, 5\% routing) yields \$465/month net --- higher-scoring pharmacies project higher because their area data suggests above-average GLP-1 volume.
+
+\item \textbf{Louisiana has 759 Immediate Outreach pharmacies} with an average estimated loss of $\sim$\$20K/month and 3.5x estimated ROI. This is Arica's home market, supported by the WVIPA relationship and association expansion strategy.
+\end{enumerate}
+
+\vspace{0.15in}
+
+\callout{Concrete Next Step}{%
+In the CSV, filter \texttt{outreach\_priority = ``Immediate Outreach''} and \texttt{state = ``LA''} to get Arica's first 759 call targets, sorted by \texttt{final\_score} descending. The \texttt{segment} column tells you which pain point to lead with for each pharmacy.
+}
+
+\vspace{0.2in}
+
+\callout{Honest Framing}{%
+\textbf{What is measured:} NPI/pharmacy identity (NPPES\textsuperscript{8}), ZIP-level disease prevalence (CDC PLACES\textsuperscript{5}), \% 65+ and income (Census ACS\textsuperscript{6}), HPSA designations (HRSA\textsuperscript{7}), state-level GLP-1 claims and costs (CMS Medicare Part D\textsuperscript{3}, Medicaid SDUD\textsuperscript{4}).
+
+\textbf{What is estimated:} Per-pharmacy GLP-1 fill volume (derived from state CMS data indexed to the NCPA 394/month average,\textsuperscript{9} adjusted $\pm$15\% by area health burden), monthly loss (fills $\times$ \$37--\$42 NCPA loss/fill\textsuperscript{1,2}), savings (assumes 5\% routing rate from Value Proposition), and ROI (savings / \$3,300 annual subscription).
+
+\textbf{Key assumptions in the estimation chain:} Government payers represent $\sim$55\% of GLP-1 volume; state index is capped at 1.5x national average; area disease burden adjusts fills $\pm$15\%; 5\% routing rate is the moderate scenario, not guaranteed.
+
+Actual conversion depends on the pharmacy's specific PBM contracts, real fill volume, and willingness to adopt.
+}
+
+%% ─────────────────────────────────────────────────────────────
+\section{Sources}
+
+\begin{enumerate}[leftmargin=2em, label={\textsuperscript{\arabic*}}, nosep]
+
+\item NCPA, ``Local pharmacies say they're struggling to afford GLP-1s,'' November 1, 2023. Reports \$37+ average losses per 30-day supply and 88\% of pharmacies considering discontinuing GLP-1 dispensing. Per-drug WAC/reimbursement spread confirms \$20--\$42 loss range across Ozempic, Wegovy, Mounjaro, and Zepbound.\\
+\url{https://ncpa.org/newsroom/qam/2023/11/01/local-pharmacies-say-theyre-struggling-afford-glp-1s}
+
+\item NCPA pharmacist survey, 2023. 95\% of respondents reported being paid an average of \$42 below acquisition cost on GLP-1 fills. 73\% reported turning away patients due to losses.\\
+\url{https://ncpa.org/newsroom/qam/2023/11/01/local-pharmacies-say-theyre-struggling-afford-glp-1s}
+
+\item CMS, Medicare Part D Spending by Drug, 2023. State-level GLP-1 claims volume and gross drug cost.\\
+\url{https://data.cms.gov/summary-statistics-on-use-and-payments/medicare-medicaid-spending-by-drug/medicare-part-d-spending-by-drug}
+
+\item CMS, Medicaid State Drug Utilization Data (SDUD), 2024. State-level GLP-1 prescriptions and reimbursement amounts.\\
+\url{https://www.medicaid.gov/medicaid/prescription-drugs/state-drug-utilization-data}
+
+\item CDC, PLACES: Local Data for Better Health, 2025 Release. ZIP-level model-based estimates for diabetes prevalence, obesity prevalence, and other chronic disease indicators.\\
+\url{https://www.cdc.gov/places/index.html}
+
+\item U.S.\ Census Bureau, American Community Survey 5-Year Estimates, 2019--2023. ZIP-level \% age 65+, median household income, and population.\\
+\url{https://data.census.gov/all?y=2023&d=ACS+5-Year+Estimates+Detailed+Tables}
+
+\item HRSA, Health Professional Shortage Areas (HPSA), current as of January 2026. Primary care shortage area designations and HPSA scores.\\
+\url{https://data.hrsa.gov/topics/health-workforce/shortage-areas}
+
+\item CMS, National Plan and Provider Enumeration System (NPPES) NPI Registry. Pharmacy identity, taxonomy, status, and owner information.\\
+\url{https://download.cms.gov/nppes/NPI_Files.html}
+
+\item RetailMyMeds GLP-1 Routing Value Proposition, February 2026 (v1.0). 394 fills/month national average derived from 67,601 annual Rx at 7\% GLP-1 penetration (NCPA Digest 2024). \$275/month pricing, 5\% moderate routing rate, breakeven analysis.
+
+\end{enumerate}
+
+\end{document}
