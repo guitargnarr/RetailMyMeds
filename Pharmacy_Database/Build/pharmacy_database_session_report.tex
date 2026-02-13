@@ -11,6 +11,12 @@
 \usepackage{array}
 \usepackage{tabularx}
 \usepackage{multicol}
+\usepackage{graphicx}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[letterspace=150]{microtype}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric}
 
 % Colors
 \definecolor{navy}{HTML}{0F172A}
@@ -23,6 +29,10 @@
 \definecolor{green}{HTML}{16A34A}
 \definecolor{amber}{HTML}{D97706}
 \definecolor{red}{HTML}{DC2626}
+\definecolor{indigo}{HTML}{4338CA}
+\definecolor{indigodeep}{HTML}{312E81}
+\definecolor{indigolight}{HTML}{818CF8}
+\definecolor{copper}{HTML}{C2724E}
 
 % Header/Footer
 \pagestyle{fancy}
@@ -43,49 +53,160 @@
 
 \begin{document}
 
-% Title Page
+% ============================================================
+% CINEMATIC COVER PAGE
+% ============================================================
 \thispagestyle{empty}
+\newgeometry{margin=0pt}
+\pagecolor{navy}
+
+\begin{tikzpicture}[remember picture, overlay]
+
+  % --- Layer 1: Deep indigo-shifted navy base ---
+  \fill[navy!92!indigodeep] (current page.south west) rectangle (current page.north east);
+
+  % --- Layer 2: Primary indigo radial glow (lower-right) ---
+  \shade[inner color=indigo!40!navy, outer color=transparent, opacity=0.45]
+    ([xshift=4cm, yshift=-5cm]current page.center) circle (12cm);
+
+  % --- Layer 3: Secondary copper radial glow (upper-left, warm) ---
+  \shade[inner color=copper!30!navy, outer color=transparent, opacity=0.35]
+    ([xshift=-5cm, yshift=7cm]current page.center) circle (10cm);
+
+  % --- Layer 4: Indigo bloom behind title area ---
+  \shade[inner color=indigo!25!navy, outer color=transparent, opacity=0.30]
+    ([xshift=0cm, yshift=4cm]current page.center) circle (6cm);
+
+  % --- Layer 5: Warm copper underpaint ---
+  \shade[inner color=copper!15!navy, outer color=transparent, opacity=0.20]
+    ([xshift=2cm, yshift=-2cm]current page.center) circle (8cm);
+
+  % --- Concentric ellipses ---
+  \foreach \r/\a in {3.0/0.16, 4.5/0.13, 6.2/0.10, 8.0/0.08, 10.0/0.06, 12.5/0.04} {
+    \draw[indigolight!70!white, opacity=\a, line width=0.5pt, rotate around={-15:([xshift=2.5cm,yshift=-2.5cm]current page.center)}]
+      ([xshift=2.5cm,yshift=-2.5cm]current page.center) ellipse ({\r cm} and {\r*0.58 cm});
+  }
+
+  % --- Second set of ellipses (copper) ---
+  \foreach \r/\a in {3.8/0.10, 5.5/0.07, 7.5/0.05, 9.5/0.04} {
+    \draw[copper!55!white, opacity=\a, line width=0.4pt, rotate around={22:([xshift=-3.5cm,yshift=3.5cm]current page.center)}]
+      ([xshift=-3.5cm,yshift=3.5cm]current page.center) ellipse ({\r cm} and {\r*0.52 cm});
+  }
+
+  % --- Bezier flow curves ---
+  \draw[indigolight!50!white, opacity=0.12, line width=0.6pt]
+    ([xshift=-3cm,yshift=-10cm]current page.center) ..
+    controls ([xshift=5cm,yshift=-3cm]current page.center) and ([xshift=-4cm,yshift=5cm]current page.center) ..
+    ([xshift=7cm,yshift=11cm]current page.center);
+  \draw[copper!40!white, opacity=0.09, line width=0.5pt]
+    ([xshift=-9cm,yshift=-5cm]current page.center) ..
+    controls ([xshift=-1cm,yshift=3cm]current page.center) and ([xshift=4cm,yshift=6cm]current page.center) ..
+    ([xshift=10cm,yshift=4cm]current page.center);
+  \draw[indigolight!35!white, opacity=0.07, line width=0.4pt]
+    ([xshift=8cm,yshift=-11cm]current page.center) ..
+    controls ([xshift=2cm,yshift=-1cm]current page.center) and ([xshift=-5cm,yshift=4cm]current page.center) ..
+    ([xshift=-8cm,yshift=10cm]current page.center);
+
+  % --- Corner brackets (top-left) ---
+  \draw[indigolight!60!white, opacity=0.25, line width=0.7pt]
+    ([xshift=1.2cm, yshift=-1.2cm]current page.north west) -- ++(0, -2.2cm);
+  \draw[indigolight!60!white, opacity=0.25, line width=0.7pt]
+    ([xshift=1.2cm, yshift=-1.2cm]current page.north west) -- ++(2.2cm, 0);
+
+  % --- Corner brackets (bottom-right) ---
+  \draw[copper!50!white, opacity=0.20, line width=0.7pt]
+    ([xshift=-1.2cm, yshift=1.2cm]current page.south east) -- ++(0, 2.2cm);
+  \draw[copper!50!white, opacity=0.20, line width=0.7pt]
+    ([xshift=-1.2cm, yshift=1.2cm]current page.south east) -- ++(-2.2cm, 0);
+
+  % --- Horizontal measurement rules ---
+  \draw[white, opacity=0.08, line width=0.3pt]
+    ([xshift=1.5cm, yshift=-4.5cm]current page.north west) -- ([xshift=-1.5cm, yshift=-4.5cm]current page.north east);
+  \draw[white, opacity=0.05, line width=0.3pt]
+    ([xshift=1.5cm, yshift=3.5cm]current page.south west) -- ([xshift=-1.5cm, yshift=3.5cm]current page.south east);
+
+  % --- Diamond accents ---
+  \node[diamond, draw=indigolight!50!white, opacity=0.18, line width=0.5pt, minimum size=7pt, inner sep=0pt]
+    at ([xshift=7cm,yshift=-4cm]current page.center) {};
+  \node[diamond, draw=copper!40!white, opacity=0.14, line width=0.5pt, minimum size=5pt, inner sep=0pt]
+    at ([xshift=-6cm,yshift=6cm]current page.center) {};
+  \node[diamond, draw=indigolight!35!white, opacity=0.10, line width=0.4pt, minimum size=4pt, inner sep=0pt]
+    at ([xshift=-7.5cm,yshift=-6cm]current page.center) {};
+
+  % --- Edge vignette ---
+  \shade[top color=black!50, bottom color=transparent, opacity=0.20]
+    (current page.north west) rectangle ([yshift=-3cm]current page.north east);
+  \shade[bottom color=black!50, top color=transparent, opacity=0.25]
+    ([yshift=3cm]current page.south west) rectangle (current page.south east);
+  \shade[left color=black!40, right color=transparent, opacity=0.15]
+    (current page.north west) rectangle ([xshift=2.5cm]current page.south west);
+  \shade[right color=black!40, left color=transparent, opacity=0.15]
+    ([xshift=-2.5cm]current page.north east) rectangle (current page.south east);
+
+  % --- Charioteer logo --- ghosted ---
+  \node[opacity=0.06] at ([yshift=5.8cm]current page.south)
+    {\includegraphics[width=4.5cm]{assets/charioteer-white.pdf}};
+
+\end{tikzpicture}
+
+\vspace*{2.8cm}
+
 \begin{center}
-\vspace*{2.5in}
 
-{\small\color{teal}\textsc{Session Report}}
+{\fontsize{9}{11}\selectfont\textcolor{indigolight!70!white}{\textls[250]{\MakeUppercase{Session Report}}}}
 
-\vspace{0.3in}
+\vspace{0.6cm}
 
-{\Huge\bfseries\color{navy}Independent Pharmacy\\[6pt]Database}
+{\fontsize{36}{42}\selectfont\bfseries\color{white}Independent Pharmacy}
 
-\vspace{0.2in}
+\vspace{0.15cm}
 
-{\Large\color{orange}\textsc{What We Built, What It Contains,\\[4pt]and What Comes Next}}
+{\fontsize{36}{42}\selectfont\bfseries\color{white}Database}
 
-\vspace{0.15in}
+\vspace{0.4cm}
 
-{\color{orange}\rule{2in}{2pt}}
+{\color{indigo!70!white}\rule{6cm}{0.8pt}}
 
-\vspace{0.5in}
+\vspace{0.5cm}
 
-{\color{slate}
+{\fontsize{13}{17}\selectfont\color{white!75}What We Built\hspace{1em}|\hspace{1em}What It Contains\hspace{1em}|\hspace{1em}What Comes Next}
+
+\vspace{0.4cm}
+
+{\fontsize{12}{15}\selectfont\color{copper}\textsc{RETAILMYMEDS}}
+
+\vspace{0.8cm}
+
+{\color{white!60}\small
 \begin{tabular}{rl}
-\textbf{Date} & February 12, 2026 \\
-\textbf{Session} & Single working session, 2:00 PM EST \\
-\textbf{Deliverable} & \texttt{qualified\_independent\_pharmacies\_feb2026.csv} \\
-\textbf{Records} & 41,775 independent pharmacies \\
-\textbf{Qualified} & Status-segmented, with owner name/title/phone \\
-\textbf{Coverage} & All 50 states + District of Columbia \\
-\textbf{Source} & CMS NPPES Data Dissemination (Feb 9, 2026) \\
+\textcolor{white!45}{Records} & \textcolor{white!75}{\textbf{41,775} independent pharmacies} \\[3pt]
+\textcolor{white!45}{Coverage} & \textcolor{white!75}{All 50 states + District of Columbia} \\[3pt]
+\textcolor{white!45}{Source} & \textcolor{white!75}{CMS NPPES Data Dissemination (Feb 9, 2026)} \\
 \end{tabular}
 }
 
-\vspace{1.5in}
+\vspace{1.2cm}
 
-{\small\color{slate}
-\begin{tabular}{rl}
-\textsc{Prepared For} & Arica Collins \& Kevin --- RetailMyMeds \\
-\textsc{Prepared By} & Matthew Scott \\
-\end{tabular}
+{\fontsize{10}{13}\selectfont
+\textcolor{white!50}{\textls[100]{\MakeUppercase{Prepared For}}}~~\textcolor{white!70}{\textbf{Arica Collins, PharmD}~~\&~~\textbf{Kevin McCarron}}\par
+\vspace{8pt}
+\textcolor{white!50}{\textls[100]{\MakeUppercase{Prepared By}}}~~\textcolor{white!70}{\textbf{Matthew Scott}}\par
+\vspace{4pt}
+\textcolor{white!40}{February 12, 2026}
 }
 
 \end{center}
+
+\vfill
+
+\begin{center}
+{\fontsize{8}{10}\selectfont\textcolor{white!35}{\textls[150]{\MakeUppercase{Project Lavos LLC}}}\quad\textcolor{indigo!50!white}{|}\quad\textcolor{white!35}{Louisville, KY}}
+\end{center}
+
+\vspace{0.8cm}
+
+\restoregeometry
+\nopagecolor
 \newpage
 
 % Table of Contents
@@ -614,6 +735,12 @@ Enrichment items 3--7 are blocked --- not by technical difficulty, but by access
 \end{itemize}
 
 The file as delivered is actionable without any of these. The enrichment items make it \textit{more} actionable --- they let Arica prioritize who to call first, not whether she can call at all.
+
+\subsection{How This Connects}
+
+This database is the foundation layer. On top of it, the \textbf{GLP-1 Pharmacy Targeting} analysis (separate report) scores and ranks all 41,775 pharmacies by financial exposure, area health context, and outreach priority --- giving Arica a prioritized list of who to call and what to say.
+
+When those pharmacies engage --- through Arica's direct outreach or through the RetailMyMeds website --- the \textbf{qualification form} that Kevin is building in Wix Studio scores them using the same dimensions and delivers a personalized scorecard automatically. The database identifies prospects. The website converts them. Together they give Arica a system, not just a spreadsheet.
 
 \vspace{1em}
 
