@@ -25,6 +25,8 @@ I've attached two PDFs that explain the data:
 - **Independent Pharmacy Database -- Session Report** (12 pages): How the base dataset was built, what it contains, what it can't answer yet, and the enrichment path forward
 - **GLP-1 Pharmacy Targeting** (6 pages): The scoring methodology, grade distribution, outreach priorities, financial model, and top 10 states by immediate outreach volume
 
+I've also attached the CSV itself (**pharmacies_glp1_targeting.csv**). This is the raw dataset -- one row per pharmacy, 36 columns of scores, financials, and area health data. You won't need it for the site build, but it's the source of truth behind everything in the reports and it's what Arica will work from when she starts outreach.
+
 Every number traces to a named federal source. The financial projections (loss per fill, savings, ROI) are estimates built on NCPA survey data and are clearly labeled as such in both reports. The underlying area health and claims data is measured, not estimated.
 
 **2. Updated: Wix Qualification Form Spec (v2.1)**
