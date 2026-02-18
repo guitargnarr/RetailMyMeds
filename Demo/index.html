@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RetailMyMeds - Pharmacy Scorecard Demo</title>
+    <style>
+        :root {
+            --teal: #0d9488;
+            --teal-light: #14b8a6;
+            --teal-bg: #f0fdfa;
+            --plum: #1a0a2e;
+            --slate: #334155;
+            --gold: #d4a853;
+            --gray-100: #f7f7f8;
+            --gray-200: #e5e7eb;
+            --gray-500: #6b7280;
+            --gray-900: #111827;
+            --green: #22c55e;
+            --blue: #3b82f6;
+            --amber: #f59e0b;
+            --red: #ef4444;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--gray-100);
+            color: var(--gray-900);
+            min-height: 100vh;
+        }
+
+        header {
+            background: var(--plum);
+            padding: 20px 24px;
+            text-align: center;
+        }
+        header h1 {
+            color: white;
+            font-size: 20px;
+            font-weight: 600;
+        }
+        header p {
+            color: var(--gold);
+            font-size: 13px;
+            margin-top: 4px;
+        }
+
+        .container {
+            max-width: 640px;
+            margin: 0 auto;
+            padding: 24px 16px;
+        }
+
+        /* Form */
+        .form-card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .form-card h2 {
+            font-size: 18px;
+            margin-bottom: 4px;
+            color: var(--slate);
+        }
+        .form-card .subtitle {
+            font-size: 13px;
+            color: var(--gray-500);
+            margin-bottom: 20px;
+        }
+
+        .field {
+            margin-bottom: 16px;
+        }
+        .field label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--slate);
+            margin-bottom: 4px;
+        }
+        .field label .optional {
+            font-weight: 400;
+            color: var(--gray-500);
+        }
+        .field input, .field select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--gray-200);
+            border-radius: 8px;
+            font-size: 15px;
+            color: var(--gray-900);
+            background: white;
+            transition: border-color 0.15s;
+        }
+        .field input:focus, .field select:focus {
+            outline: none;
+            border-color: var(--teal);
+            box-shadow: 0 0 0 3px rgba(13,148,136,0.1);
+        }
+
+        .row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        @media (max-width: 480px) {
+            .row { grid-template-columns: 1fr; }
+        }
+
+        .divider {
+            height: 1px;
+            background: var(--gray-200);
+            margin: 20px 0;
+        }
+
+        .section-label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--teal);
+            margin-bottom: 12px;
+        }
+
+        button.submit {
+            width: 100%;
+            padding: 14px;
+            background: var(--teal);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s;
+            margin-top: 8px;
+        }
+        button.submit:hover { background: var(--teal-light); }
+        button.submit:disabled {
+            background: var(--gray-200);
+            color: var(--gray-500);
+            cursor: not-allowed;
+        }
+
+        .quick-link {
+            text-align: center;
+            margin-top: 12px;
+        }
+        .quick-link a {
+            font-size: 13px;
+            color: var(--teal);
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 40px 20px;
+        }
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--gray-200);
+            border-top-color: var(--teal);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 16px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loading p { color: var(--gray-500); font-size: 14px; }
+        .loading .note { font-size: 12px; margin-top: 8px; color: var(--gray-500); }
+
+        /* Results */
+        .results-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .results-header {
+            background: var(--plum);
+            padding: 24px;
+            text-align: center;
+        }
+        .results-header .pharmacy-name {
+            color: var(--gold);
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+        .grade-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            font-size: 48px;
+            font-weight: 800;
+            color: white;
+            margin-bottom: 8px;
+        }
+        .results-header .score-label {
+            color: white;
+            font-size: 22px;
+            font-weight: 600;
+        }
+        .results-header .score-number {
+            color: rgba(255,255,255,0.7);
+            font-size: 14px;
+            margin-top: 2px;
+        }
+
+        .results-body { padding: 24px; }
+
+        .dimension-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--gray-200);
+        }
+        .dimension-row:last-child { border-bottom: none; }
+        .dimension-name { font-size: 14px; color: var(--slate); }
+        .dimension-score {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--teal);
+        }
+
+        .bar-container {
+            width: 120px;
+            height: 6px;
+            background: var(--gray-200);
+            border-radius: 3px;
+            margin: 0 12px;
+            flex-shrink: 0;
+        }
+        .bar-fill {
+            height: 100%;
+            border-radius: 3px;
+            background: var(--teal);
+            transition: width 0.6s ease;
+        }
+
+        .recommendation {
+            margin-top: 20px;
+            padding: 16px;
+            background: var(--teal-bg);
+            border-radius: 8px;
+            border-left: 3px solid var(--teal);
+        }
+        .recommendation p {
+            font-size: 14px;
+            line-height: 1.5;
+            color: var(--slate);
+        }
+
+        .breakeven {
+            margin-top: 16px;
+            text-align: center;
+            padding: 12px;
+            background: var(--gray-100);
+            border-radius: 8px;
+        }
+        .breakeven .number {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--teal);
+        }
+        .breakeven .label {
+            font-size: 12px;
+            color: var(--gray-500);
+        }
+
+        .actions {
+            margin-top: 20px;
+            display: flex;
+            gap: 8px;
+        }
+        .actions button {
+            flex: 1;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .btn-primary {
+            background: var(--teal);
+            color: white;
+            border: none;
+        }
+        .btn-primary:hover { background: var(--teal-light); }
+        .btn-secondary {
+            background: white;
+            color: var(--teal);
+            border: 2px solid var(--teal);
+        }
+        .btn-secondary:hover { background: var(--teal-bg); }
+
+        /* Quick results */
+        .quick-results {
+            padding: 24px;
+        }
+        .quick-stat {
+            text-align: center;
+            padding: 16px 0;
+        }
+        .quick-stat .value {
+            font-size: 32px;
+            font-weight: 800;
+            color: var(--teal);
+        }
+        .quick-stat .desc {
+            font-size: 13px;
+            color: var(--gray-500);
+        }
+
+        .error-msg {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #991b1b;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-top: 16px;
+        }
+
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>RetailMyMeds</h1>
+        <p>Pharmacy Qualification Scorecard</p>
+    </header>
+
+    <div class="container">
+        <!-- FORM -->
+        <div id="formSection" class="form-card">
+            <h2>See how RetailMyMeds fits your pharmacy</h2>
+            <p class="subtitle">2 minutes. 10 questions. Personalized ROI projection.</p>
+
+            <div class="section-label">Your Pharmacy</div>
+            <div class="field">
+                <label>Pharmacy Name</label>
+                <input type="text" id="pharmacyName" placeholder="e.g. Main Street Pharmacy">
+            </div>
+            <div class="row">
+                <div class="field">
+                    <label>City</label>
+                    <input type="text" id="city" placeholder="Louisville">
+                </div>
+                <div class="field">
+                    <label>State</label>
+                    <select id="state">
+                        <option value="">Select...</option>
+                        <option>AL</option><option>AK</option><option>AZ</option><option>AR</option>
+                        <option>CA</option><option>CO</option><option>CT</option><option>DE</option>
+                        <option>FL</option><option>GA</option><option>HI</option><option>ID</option>
+                        <option>IL</option><option>IN</option><option>IA</option><option>KS</option>
+                        <option>KY</option><option>LA</option><option>ME</option><option>MD</option>
+                        <option>MA</option><option>MI</option><option>MN</option><option>MS</option>
+                        <option>MO</option><option>MT</option><option>NE</option><option>NV</option>
+                        <option>NH</option><option>NJ</option><option>NM</option><option>NY</option>
+                        <option>NC</option><option>ND</option><option>OH</option><option>OK</option>
+                        <option>OR</option><option>PA</option><option>RI</option><option>SC</option>
+                        <option>SD</option><option>TN</option><option>TX</option><option>UT</option>
+                        <option>VT</option><option>VA</option><option>WA</option><option>WV</option>
+                        <option>WI</option><option>WY</option>
+                    </select>
+                </div>
+            </div>
+            <div class="field">
+                <label>Years in Business <span class="optional">(optional)</span></label>
+                <select id="yearsInBusiness">
+                    <option value="">Select...</option>
+                    <option>Less than 5</option>
+                    <option>5-10</option>
+                    <option>10-20</option>
+                    <option>20+</option>
+                </select>
+            </div>
+
+            <div class="divider"></div>
+            <div class="section-label">Your Volume</div>
+            <div class="field">
+                <label>Monthly prescriptions filled</label>
+                <select id="monthlyRxVolume">
+                    <option value="">Select...</option>
+                    <option>Under 2,000</option>
+                    <option>2,000-3,999</option>
+                    <option>4,000-5,999</option>
+                    <option>6,000-7,999</option>
+                    <option>8,000+</option>
+                </select>
+            </div>
+            <div class="field">
+                <label>GLP-1 fills per month (Ozempic, Wegovy, Mounjaro, Zepbound)</label>
+                <select id="glp1MonthlyFills">
+                    <option value="">Select...</option>
+                    <option>I'm not sure</option>
+                    <option>Under 100</option>
+                    <option>100-200</option>
+                    <option>200-350</option>
+                    <option>350-500</option>
+                    <option>500+</option>
+                </select>
+            </div>
+            <div class="field">
+                <label>Percentage of patients on Medicare Part D or Medicaid</label>
+                <select id="govPayerPct">
+                    <option value="">Select...</option>
+                    <option>Under 20%</option>
+                    <option>20-40%</option>
+                    <option>40-60%</option>
+                    <option>60-80%</option>
+                    <option>Over 80%</option>
+                </select>
+            </div>
+
+            <div class="divider"></div>
+            <div class="section-label">Your Systems</div>
+            <div class="row">
+                <div class="field">
+                    <label>Pharmacy management software</label>
+                    <select id="pmsSystem">
+                        <option value="">Select...</option>
+                        <option>PioneerRx</option>
+                        <option>Liberty Software</option>
+                        <option>PrimeRx</option>
+                        <option>Rx30</option>
+                        <option>BestRx</option>
+                        <option>QS/1</option>
+                        <option>Computer-Rx</option>
+                        <option>Other</option>
+                        <option>I don't know</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>Pharmacy technicians on staff</label>
+                    <select id="numTechnicians">
+                        <option value="">Select...</option>
+                        <option>0</option>
+                        <option>1</option>
+                        <option>2</option>
+                        <option>3-4</option>
+                        <option>5+</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="divider"></div>
+            <div class="section-label">Your Situation</div>
+            <div class="field">
+                <label>Are you losing money on any prescriptions you fill?</label>
+                <select id="awareOfUnderwaterRx">
+                    <option value="">Select...</option>
+                    <option>Yes</option>
+                    <option>No</option>
+                    <option>I'm not sure</option>
+                </select>
+            </div>
+            <div class="field">
+                <label>Lost patients to Amazon Pharmacy, mail-order, or online?</label>
+                <select id="lostPatientsToMailOrder">
+                    <option value="">Select...</option>
+                    <option>Yes</option>
+                    <option>No</option>
+                </select>
+            </div>
+            <div class="field">
+                <label>Impact of DIR fees on your business?</label>
+                <select id="dirFeePressure">
+                    <option value="">Select...</option>
+                    <option>Manageable</option>
+                    <option>Significant squeeze</option>
+                    <option>Threatening viability</option>
+                </select>
+            </div>
+            <div class="field">
+                <label>Filling drugs in Medicare's Most Favored Nation pricing program? <span class="optional">(optional)</span></label>
+                <select id="dispensesMfpDrugs">
+                    <option value="">Select...</option>
+                    <option>Yes</option>
+                    <option>No</option>
+                    <option>I'm not sure</option>
+                </select>
+            </div>
+
+            <div class="divider"></div>
+            <div class="section-label">Your Contact</div>
+            <div class="field">
+                <label>Your Name</label>
+                <input type="text" id="ownerName" placeholder="Dr. Jane Smith">
+            </div>
+            <div class="row">
+                <div class="field">
+                    <label>Email <span class="optional">(optional)</span></label>
+                    <input type="email" id="email" placeholder="jane@pharmacy.com">
+                </div>
+                <div class="field">
+                    <label>Phone <span class="optional">(optional)</span></label>
+                    <input type="tel" id="phone" placeholder="(555) 123-4567">
+                </div>
+            </div>
+
+            <button class="submit" id="btnSubmit" onclick="submitFull()">Get My Scorecard</button>
+            <div class="quick-link">
+                <a onclick="submitQuick()">Just give me a quick estimate (4 fields)</a>
+            </div>
+            <div id="formError" class="error-msg hidden"></div>
+        </div>
+
+        <!-- LOADING -->
+        <div id="loadingSection" class="form-card hidden">
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>Generating your personalized scorecard...</p>
+                <p class="note">This may take up to 30 seconds on first load.</p>
+            </div>
+        </div>
+
+        <!-- FULL RESULTS -->
+        <div id="resultsSection" class="hidden">
+            <div class="results-card">
+                <div class="results-header">
+                    <div class="pharmacy-name" id="resPharmacyName"></div>
+                    <div class="grade-badge" id="resGradeBadge"></div>
+                    <div class="score-label" id="resLabel"></div>
+                    <div class="score-number" id="resScoreNum"></div>
+                </div>
+                <div class="results-body">
+                    <div class="dimension-row">
+                        <span class="dimension-name">Financial Fit</span>
+                        <div class="bar-container"><div class="bar-fill" id="barFinancial"></div></div>
+                        <span class="dimension-score" id="resFinancial"></span>
+                    </div>
+                    <div class="dimension-row">
+                        <span class="dimension-name">Operational Readiness</span>
+                        <div class="bar-container"><div class="bar-fill" id="barOperational"></div></div>
+                        <span class="dimension-score" id="resOperational"></span>
+                    </div>
+                    <div class="dimension-row">
+                        <span class="dimension-name">Market Urgency</span>
+                        <div class="bar-container"><div class="bar-fill" id="barMarket"></div></div>
+                        <span class="dimension-score" id="resMarket"></span>
+                    </div>
+
+                    <div class="breakeven">
+                        <div class="number" id="resBreakeven"></div>
+                        <div class="label">fills/month to break even on $275 subscription</div>
+                    </div>
+
+                    <div class="recommendation">
+                        <p id="resRecommendation"></p>
+                    </div>
+
+                    <div class="actions">
+                        <button class="btn-primary" id="btnDownload">Download PDF</button>
+                        <button class="btn-secondary" onclick="resetForm()">Score Another</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- QUICK RESULTS -->
+        <div id="quickResultsSection" class="hidden">
+            <div class="results-card">
+                <div class="results-header">
+                    <div class="pharmacy-name" id="qrPharmacyName"></div>
+                    <div class="score-label" id="qrVerdict" style="font-size: 28px;"></div>
+                </div>
+                <div class="quick-results">
+                    <div class="row">
+                        <div class="quick-stat">
+                            <div class="value" id="qrMonthlyLoss"></div>
+                            <div class="desc">Estimated monthly GLP-1 loss</div>
+                        </div>
+                        <div class="quick-stat">
+                            <div class="value" id="qrAnnualLoss"></div>
+                            <div class="desc">Estimated annual loss</div>
+                        </div>
+                    </div>
+                    <div class="row" style="margin-top:12px;">
+                        <div class="quick-stat">
+                            <div class="value" id="qrNetSavings"></div>
+                            <div class="desc">Annual net savings at 5% routing</div>
+                        </div>
+                        <div class="quick-stat">
+                            <div class="value" id="qrBreakeven"></div>
+                            <div class="desc">Fills/month to break even</div>
+                        </div>
+                    </div>
+
+                    <div class="recommendation" style="margin-top:20px;">
+                        <p id="qrNextStep"></p>
+                    </div>
+
+                    <div class="actions" style="margin-top:20px;">
+                        <button class="btn-primary" onclick="resetForm()">Get Full Scorecard</button>
+                        <button class="btn-secondary" onclick="resetForm()">Start Over</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'https://texume-api.onrender.com';
+
+        // Warm up the API on page load
+        fetch(API_BASE + '/health').catch(() => {});
+
+        function showSection(id) {
+            ['formSection', 'loadingSection', 'resultsSection', 'quickResultsSection']
+                .forEach(s => document.getElementById(s).classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+        }
+
+        function showError(msg) {
+            const el = document.getElementById('formError');
+            el.textContent = msg;
+            el.classList.remove('hidden');
+        }
+
+        function val(id) { return document.getElementById(id).value; }
+
+        function validateFull() {
+            const required = [
+                ['pharmacyName', 'Pharmacy Name'],
+                ['city', 'City'],
+                ['state', 'State'],
+                ['monthlyRxVolume', 'Monthly Rx Volume'],
+                ['glp1MonthlyFills', 'GLP-1 Fills'],
+                ['govPayerPct', 'Government Payer %'],
+                ['pmsSystem', 'PMS System'],
+                ['numTechnicians', 'Technicians'],
+                ['awareOfUnderwaterRx', 'Underwater Rx question'],
+                ['lostPatientsToMailOrder', 'Mail-order question'],
+                ['dirFeePressure', 'DIR Fees question'],
+                ['ownerName', 'Your Name'],
+            ];
+            const missing = required.filter(([id]) => !val(id).trim());
+            if (missing.length > 0) {
+                showError('Please fill in: ' + missing.map(m => m[1]).join(', '));
+                return false;
+            }
+            document.getElementById('formError').classList.add('hidden');
+            return true;
+        }
+
+        async function submitFull() {
+            if (!validateFull()) return;
+
+            showSection('loadingSection');
+            const btn = document.getElementById('btnSubmit');
+            btn.disabled = true;
+
+            const payload = {
+                pharmacy_name: val('pharmacyName'),
+                city: val('city'),
+                state: val('state'),
+                years_in_business: val('yearsInBusiness') || null,
+                monthly_rx_volume: val('monthlyRxVolume'),
+                glp1_monthly_fills: val('glp1MonthlyFills'),
+                gov_payer_pct: val('govPayerPct'),
+                pms_system: val('pmsSystem'),
+                num_technicians: val('numTechnicians'),
+                aware_of_underwater_rx: val('awareOfUnderwaterRx') || "I'm not sure",
+                lost_patients_to_mail_order: val('lostPatientsToMailOrder') || "No",
+                dir_fee_pressure: val('dirFeePressure') || "Significant squeeze",
+                dispenses_mfp_drugs: val('dispensesMfpDrugs') || "I'm not sure",
+                owner_name: val('ownerName'),
+                email: val('email') || null,
+                phone: val('phone') || null,
+            };
+
+            try {
+                const resp = await fetch(API_BASE + '/scorecard', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
+
+                if (!resp.ok) {
+                    const err = await resp.text();
+                    throw new Error(err);
+                }
+
+                const data = await resp.json();
+                displayResults(data);
+            } catch (err) {
+                showSection('formSection');
+                showError('Error: ' + (err.message || 'Unable to reach scoring service. Try again.'));
+                btn.disabled = false;
+            }
+        }
+
+        function displayResults(data) {
+            const gradeColors = { A: '#22c55e', B: '#3b82f6', C: '#f59e0b', D: '#ef4444' };
+            const color = gradeColors[data.overall_grade] || '#6b7280';
+
+            document.getElementById('resPharmacyName').textContent = data.pharmacy_name;
+            const badge = document.getElementById('resGradeBadge');
+            badge.textContent = data.overall_grade;
+            badge.style.background = color;
+            document.getElementById('resLabel').textContent = data.overall_label;
+            document.getElementById('resScoreNum').textContent = data.overall_score + '/100';
+
+            document.getElementById('resFinancial').textContent = data.financial_fit_score + '/100';
+            document.getElementById('barFinancial').style.width = data.financial_fit_score + '%';
+            document.getElementById('resOperational').textContent = data.operational_readiness_score + '/100';
+            document.getElementById('barOperational').style.width = data.operational_readiness_score + '%';
+            document.getElementById('resMarket').textContent = data.market_urgency_score + '/100';
+            document.getElementById('barMarket').style.width = data.market_urgency_score + '%';
+
+            document.getElementById('resBreakeven').textContent = data.roi_breakeven_fills;
+            document.getElementById('resRecommendation').textContent = data.recommendation;
+
+            // PDF download
+            const dlBtn = document.getElementById('btnDownload');
+            if (data.pdf_base64) {
+                dlBtn.style.display = '';
+                dlBtn.onclick = () => {
+                    const bytes = atob(data.pdf_base64);
+                    const arr = new Uint8Array(bytes.length);
+                    for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
+                    const blob = new Blob([arr], { type: 'application/pdf' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = data.filename || 'scorecard.pdf';
+                    a.click();
+                    URL.revokeObjectURL(url);
+                };
+            } else {
+                dlBtn.style.display = 'none';
+            }
+
+            showSection('resultsSection');
+        }
+
+        async function submitQuick() {
+            const name = val('pharmacyName');
+            const state = val('state');
+            const volume = val('monthlyRxVolume');
+            const glp1 = val('glp1MonthlyFills');
+
+            if (!name || !state || !volume || !glp1) {
+                showError('Quick estimate needs: Pharmacy Name, State, Monthly Rx Volume, and GLP-1 Fills.');
+                return;
+            }
+            document.getElementById('formError').classList.add('hidden');
+            showSection('loadingSection');
+
+            try {
+                const resp = await fetch(API_BASE + '/scorecard/quick', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        pharmacy_name: name,
+                        state: state,
+                        monthly_rx_volume: volume,
+                        glp1_monthly_fills: glp1,
+                    }),
+                });
+
+                if (!resp.ok) throw new Error(await resp.text());
+                const data = await resp.json();
+
+                document.getElementById('qrPharmacyName').textContent = data.pharmacy_name;
+                document.getElementById('qrVerdict').textContent = data.roi_verdict;
+                document.getElementById('qrMonthlyLoss').textContent = data.estimated_monthly_loss;
+                document.getElementById('qrAnnualLoss').textContent = data.estimated_annual_loss;
+                document.getElementById('qrNetSavings').textContent = data.annual_net_savings;
+                document.getElementById('qrBreakeven').textContent = data.breakeven_fills;
+                document.getElementById('qrNextStep').textContent = data.next_step;
+
+                showSection('quickResultsSection');
+            } catch (err) {
+                showSection('formSection');
+                showError('Error: ' + (err.message || 'Unable to reach service.'));
+            }
+        }
+
+        function resetForm() {
+            showSection('formSection');
+            document.getElementById('btnSubmit').disabled = false;
+            document.getElementById('formError').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>

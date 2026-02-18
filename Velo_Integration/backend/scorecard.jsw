@@ -1,0 +1,140 @@
+/**
+ * RetailMyMeds Pharmacy Scorecard - Wix Backend Module
+ *
+ * This file goes in: Backend & Public > backend > scorecard.jsw
+ *
+ * Wix Velo .jsw files run server-side (Node.js) and are callable
+ * from page code via import. This keeps the API URL hidden from
+ * the browser and handles error cases server-side.
+ *
+ * API: https://texume-api.onrender.com/scorecard
+ * Contract: ScorecardRequest -> ScorecardResponse (see api.py)
+ */
+
+import { fetch } from 'wix-fetch';
+
+const API_URL = 'https://texume-api.onrender.com/scorecard';
+
+// Render free tier cold-starts in ~30-60s. First request warms it.
+const TIMEOUT_MS = 60000;
+
+/**
+ * Submit pharmacy data to the scoring API and return the result.
+ *
+ * @param {Object} formData - Collected from the qualification form
+ * @returns {Object} Scorecard result with scores, grade, and PDF
+ */
+export async function generateScorecard(formData) {
+    // Map form data to the exact ScorecardRequest schema
+    const payload = {
+        // Step 1: Your Pharmacy
+        pharmacy_name: formData.pharmacyName,
+        city: formData.city,
+        state: formData.state,
+        years_in_business: formData.yearsInBusiness || null,
+
+        // Step 2: Your Volume
+        monthly_rx_volume: formData.monthlyRxVolume,
+        glp1_monthly_fills: formData.glp1MonthlyFills,
+        gov_payer_pct: formData.govPayerPct,
+
+        // Step 3: Your Systems
+        pms_system: formData.pmsSystem,
+        num_technicians: formData.numTechnicians,
+
+        // Step 4: Your Situation
+        aware_of_underwater_rx: formData.awareOfUnderwaterRx || "I'm not sure",
+        lost_patients_to_mail_order: formData.lostPatientsToMailOrder || "No",
+        dir_fee_pressure: formData.dirFeePressure || "Significant squeeze",
+        dispenses_mfp_drugs: formData.dispensesMfpDrugs || "I'm not sure",
+
+        // Step 5: Contact
+        owner_name: formData.ownerName,
+        email: formData.email || null,
+        phone: formData.phone || null,
+    };
+
+    // Validate required fields before calling API
+    const required = [
+        'pharmacy_name', 'city', 'state',
+        'monthly_rx_volume', 'glp1_monthly_fills', 'gov_payer_pct',
+        'pms_system', 'num_technicians',
+        'aware_of_underwater_rx', 'lost_patients_to_mail_order',
+        'dir_fee_pressure', 'owner_name',
+    ];
+
+    const missing = required.filter(key => !payload[key]);
+    if (missing.length > 0) {
+        return {
+            success: false,
+            error: `Missing required fields: ${missing.join(', ')}`,
+        };
+    }
+
+    try {
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Scorecard API error:', response.status, errorText);
+            return {
+                success: false,
+                error: `Scoring service returned ${response.status}. Please try again.`,
+            };
+        }
+
+        const result = await response.json();
+
+        // Return the full ScorecardResponse to the page
+        return {
+            success: result.success,
+            pharmacyName: result.pharmacy_name,
+            overallScore: result.overall_score,
+            overallGrade: result.overall_grade,
+            overallLabel: result.overall_label,
+            financialFitScore: result.financial_fit_score,
+            operationalReadinessScore: result.operational_readiness_score,
+            marketUrgencyScore: result.market_urgency_score,
+            roiBreakevenFills: result.roi_breakeven_fills,
+            recommendation: result.recommendation,
+            pdfBase64: result.pdf_base64 || null,
+            filename: result.filename,
+            message: result.message,
+        };
+
+    } catch (err) {
+        console.error('Scorecard API call failed:', err);
+
+        // Distinguish cold-start timeout from other errors
+        if (err.message && err.message.includes('timeout')) {
+            return {
+                success: false,
+                error: 'The scoring service is warming up. Please try again in 30 seconds.',
+            };
+        }
+
+        return {
+            success: false,
+            error: 'Unable to reach the scoring service. Please try again later.',
+        };
+    }
+}
+
+/**
+ * Warm up the API so the actual scorecard call doesn't cold-start.
+ * Call this when the form page loads.
+ */
+export async function warmUpApi() {
+    try {
+        await fetch('https://texume-api.onrender.com/health', {
+            method: 'GET',
+        });
+        return true;
+    } catch {
+        return false;
+    }
+}
