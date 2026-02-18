@@ -65,7 +65,7 @@ ABBREV_MAP = {
 }
 
 
-def normalize_address(addr):
+def normalize_address(addr: str) -> str:
     """Normalize a street address for dedup grouping."""
     if not addr:
         return ''
@@ -79,13 +79,13 @@ def normalize_address(addr):
     return ' '.join(words)
 
 
-def pick_winner(group):
+def pick_winner(group: list[Row]) -> Row:
     """Pick the best NPI from a group of co-located pharmacies.
 
     Priority: owner-priority NPIs first, then longer names (more specific),
     then lowest NPI (oldest registration).
     """
-    def sort_key(r):
+    def sort_key(r: Row) -> tuple[int, int, str]:
         name = r.get('display_name', '') or ''
         owner = r.get('owner_name', '') or ''
         # Prefer entries with owner info
@@ -95,7 +95,10 @@ def pick_winner(group):
     return sorted(group, key=sort_key)[0]
 
 
-def stage1_address_dedup(verified_rows, qualified_rows):
+Row = dict[str, str]
+
+
+def stage1_address_dedup(verified_rows: list[Row], qualified_rows: list[Row]) -> list[Row]:
     """Deduplicate by normalized street address + city + state + zip."""
     # Build address lookup from qualified file (has street addresses)
     addr_by_npi = {}
@@ -172,18 +175,18 @@ INSTITUTIONAL_KEYWORDS = [
 ]
 
 
-def _get_name(r):
+def _get_name(r: Row) -> str:
     """Get uppercased display name from a row."""
     return (r.get('display_name', '') or '').upper()
 
 
-def _has_keyword(r, keywords):
+def _has_keyword(r: Row, keywords: list[str]) -> bool:
     """Check if row's display name contains any keyword."""
     name = _get_name(r)
     return any(kw in name for kw in keywords)
 
 
-def stage2_remove_institutional(rows):
+def stage2_remove_institutional(rows: list[Row]) -> list[Row]:
     """Remove hospitals, health centers, VA facilities, FQHCs, health systems."""
     return [r for r in rows if not _has_keyword(r, INSTITUTIONAL_KEYWORDS)]
 
@@ -199,9 +202,9 @@ SPECIALTY_TAXONOMIES = [
 ]
 
 
-def stage3_remove_specialty(rows):
+def stage3_remove_specialty(rows: list[Row]) -> list[Row]:
     """Remove pharmacies with specialty/compounding taxonomy codes."""
-    def has_specialty(r):
+    def has_specialty(r: Row) -> bool:
         tax = r.get('primary_taxonomy_desc', '') or ''
         return any(t in tax for t in SPECIALTY_TAXONOMIES)
     return [r for r in rows if not has_specialty(r)]
@@ -223,7 +226,7 @@ CONVENIENCE_KEYWORDS = [
 ]
 
 
-def stage4_remove_chains(rows):
+def stage4_remove_chains(rows: list[Row]) -> list[Row]:
     """Remove chain pharmacies and convenience store pharmacies."""
     all_kw = CHAIN_KEYWORDS + CONVENIENCE_KEYWORDS
     return [r for r in rows if not _has_keyword(r, all_kw)]
@@ -242,14 +245,14 @@ CLINIC_KEYWORDS = [
 ]
 
 
-def stage5_remove_clinics(rows):
+def stage5_remove_clinics(rows: list[Row]) -> list[Row]:
     """Remove non-pharmacy clinic entities."""
     return [r for r in rows if not _has_keyword(r, CLINIC_KEYWORDS)]
 
 
 # --- Main ---
 
-def dedup_pharmacies(verified_path, qualified_path, output_dir):
+def dedup_pharmacies(verified_path: str, qualified_path: str, output_dir: str) -> list[Row]:
     """Run full 5-stage dedup pipeline."""
 
     # Read inputs

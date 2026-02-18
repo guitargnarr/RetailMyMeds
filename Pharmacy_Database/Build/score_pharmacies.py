@@ -91,7 +91,7 @@ OUTPUT_COLUMNS = [
 
 # --- Helpers ---
 
-def format_phone(raw):
+def format_phone(raw: object) -> str:
     """Format 10-digit phone as (XXX) XXX-XXXX."""
     digits = ''.join(c for c in str(raw) if c.isdigit())
     if len(digits) == 10:
@@ -99,7 +99,7 @@ def format_phone(raw):
     return raw
 
 
-def format_currency(val):
+def format_currency(val: object) -> str:
     """Format number as $X,XXX. Returns 'N/A' for NaN/None."""
     if val is None or (isinstance(val, float) and np.isnan(val)):
         return 'N/A'
@@ -108,7 +108,7 @@ def format_currency(val):
 
 # --- Main ---
 
-def score_pharmacies(input_path, output_dir):
+def score_pharmacies(input_path: str, output_dir: str) -> list[dict[str, object]]:
     """Score pharmacies from clean CSV and write targeting CSVs."""
 
     df = pd.read_csv(input_path, dtype={'npi': str, 'zip': str, 'phone': str})
