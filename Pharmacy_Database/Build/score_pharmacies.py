@@ -143,13 +143,13 @@ def score_pharmacies(input_path, output_dir):
 
     # --- Composite score ---
     df['rmm_score'] = (
-        WEIGHTS['state_glp1_cost_per_pharmacy'] * df['state_glp1_cost_per_pharmacy_rank'] +
-        WEIGHTS['zip_diabetes_pct'] * df['zip_diabetes_pct_rank'] +
-        WEIGHTS['zip_pct_65_plus'] * df['zip_pct_65_plus_rank'] +
-        WEIGHTS['zip_obesity_pct'] * df['zip_obesity_pct_rank'] +
-        WEIGHTS['hpsa_score'] * df['hpsa_score_rank'] +
-        WEIGHTS['zip_median_income'] * df['zip_median_income_rank'] +
-        WEIGHTS['zip_population'] * df['zip_population_rank']
+        WEIGHTS['state_glp1_cost_per_pharmacy'] * df['state_glp1_cost_per_pharmacy_rank']
+        + WEIGHTS['zip_diabetes_pct'] * df['zip_diabetes_pct_rank']
+        + WEIGHTS['zip_pct_65_plus'] * df['zip_pct_65_plus_rank']
+        + WEIGHTS['zip_obesity_pct'] * df['zip_obesity_pct_rank']
+        + WEIGHTS['hpsa_score'] * df['hpsa_score_rank']
+        + WEIGHTS['zip_median_income'] * df['zip_median_income_rank']
+        + WEIGHTS['zip_population'] * df['zip_population_rank']
     ).round(1)
 
     # --- GLP-1 fill estimates ---

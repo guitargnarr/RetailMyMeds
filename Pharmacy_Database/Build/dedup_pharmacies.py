@@ -263,7 +263,8 @@ def dedup_pharmacies(verified_path, qualified_path, output_dir):
 
     # Stage 1: Address dedup
     stage1 = stage1_address_dedup(verified, qualified)
-    print(f"\nStage 1 (address dedup): {len(verified):,} -> {len(stage1):,} (-{len(verified)-len(stage1):,})")
+    s1_removed = len(verified) - len(stage1)
+    print(f"\nStage 1 (address dedup): {len(verified):,} -> {len(stage1):,} (-{s1_removed:,})")
 
     # Write deduped intermediate
     deduped_path = os.path.join(output_dir, 'ALL_VERIFIED_DEDUPED.csv')
@@ -276,19 +277,23 @@ def dedup_pharmacies(verified_path, qualified_path, output_dir):
 
     # Stage 2: Remove institutional
     stage2 = stage2_remove_institutional(stage1)
-    print(f"\nStage 2 (institutional): {len(stage1):,} -> {len(stage2):,} (-{len(stage1)-len(stage2):,})")
+    s2_removed = len(stage1) - len(stage2)
+    print(f"\nStage 2 (institutional): {len(stage1):,} -> {len(stage2):,} (-{s2_removed:,})")
 
     # Stage 3: Remove specialty taxonomy
     stage3 = stage3_remove_specialty(stage2)
-    print(f"Stage 3 (specialty/compounding): {len(stage2):,} -> {len(stage3):,} (-{len(stage2)-len(stage3):,})")
+    s3_removed = len(stage2) - len(stage3)
+    print(f"Stage 3 (specialty/compounding): {len(stage2):,} -> {len(stage3):,} (-{s3_removed:,})")
 
     # Stage 4: Remove chains
     stage4 = stage4_remove_chains(stage3)
-    print(f"Stage 4 (chains): {len(stage3):,} -> {len(stage4):,} (-{len(stage3)-len(stage4):,})")
+    s4_removed = len(stage3) - len(stage4)
+    print(f"Stage 4 (chains): {len(stage3):,} -> {len(stage4):,} (-{s4_removed:,})")
 
     # Stage 5: Remove clinics
     stage5 = stage5_remove_clinics(stage4)
-    print(f"Stage 5 (clinics): {len(stage4):,} -> {len(stage5):,} (-{len(stage4)-len(stage5):,})")
+    s5_removed = len(stage4) - len(stage5)
+    print(f"Stage 5 (clinics): {len(stage4):,} -> {len(stage5):,} (-{s5_removed:,})")
 
     # Write clean output
     clean_path = os.path.join(output_dir, 'ALL_VERIFIED_CLEAN.csv')
@@ -306,7 +311,8 @@ def dedup_pharmacies(verified_path, qualified_path, output_dir):
     print(f"Deduped:   {len(stage1):>7,}  (-{removed_dedup:,} address duplicates)")
     print(f"Clean:     {len(stage5):>7,}  (-{removed_clean:,} non-independent)")
     print("NCPA ref:   18,984")
-    print(f"Ratio:     {len(stage5)/18984:.2f}x NCPA")
+    ratio = len(stage5) / 18984
+    print(f"Ratio:     {ratio:.2f}x NCPA")
 
     # State distribution
     states = Counter(r.get('state', '') for r in stage5)
