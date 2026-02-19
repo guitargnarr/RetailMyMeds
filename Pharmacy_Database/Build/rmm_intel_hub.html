@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RMM Intelligence Hub</title>
+<style>
+  :root {
+    --bg: #0c0e14;
+    --surface: #12151f;
+    --surface-2: #181c28;
+    --border: #1e2235;
+    --text: #d4d4d8;
+    --text-muted: #71717a;
+    --text-dim: #52525b;
+    --white: #fafafa;
+    --green: #4ade80;
+    --green-bg: #0f2a1d;
+    --yellow: #facc15;
+    --yellow-bg: #2a2810;
+    --red: #f87171;
+    --red-bg: #2a1010;
+    --blue: #60a5fa;
+    --blue-bg: #102040;
+    --accent: #4a6fa5;
+    --accent-hover: #5a80b8;
+    --mono: 'SF Mono', 'Fira Code', 'Cascadia Code', 'JetBrains Mono', monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  /* --- Header --- */
+  .header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .header-left { display: flex; align-items: center; gap: 14px; }
+
+  .header h1 {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--white);
+    letter-spacing: -0.3px;
+  }
+
+  .header .badge {
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: var(--green-bg);
+    color: var(--green);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .header-stats {
+    display: flex;
+    gap: 20px;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  .header-stats strong { color: var(--text); }
+
+  /* --- Layout --- */
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px 32px;
+  }
+
+  /* --- Search --- */
+  .search-bar {
+    position: relative;
+    margin-bottom: 24px;
+  }
+
+  .search-input {
+    width: 100%;
+    padding: 12px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--white);
+    font-size: 15px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .search-input:focus { border-color: var(--accent); }
+  .search-input::placeholder { color: var(--text-dim); }
+
+  .search-results {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    max-height: 380px;
+    overflow-y: auto;
+    z-index: 100;
+    display: none;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+  }
+  .search-results.open { display: block; }
+
+  .result-item {
+    padding: 12px 16px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.1s;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .result-item:last-child { border-bottom: none; }
+  .result-item:hover { background: var(--surface-2); }
+
+  .result-left { flex: 1; }
+  .result-name { color: var(--white); font-weight: 500; font-size: 14px; }
+  .result-meta { color: var(--text-muted); font-size: 12px; margin-top: 2px; }
+  .result-npi { font-family: var(--mono); color: var(--text-dim); font-size: 11px; }
+
+  .result-right { text-align: right; }
+  .result-score { color: var(--text); font-family: var(--mono); font-size: 13px; }
+
+  .grade-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+  }
+  .grade-A { background: var(--green-bg); color: var(--green); }
+  .grade-B { background: #1a2a10; color: #a3e635; }
+  .grade-C { background: var(--yellow-bg); color: var(--yellow); }
+  .grade-D { background: var(--red-bg); color: var(--red); }
+
+  /* --- Report view --- */
+  .report-view { display: none; }
+  .report-view.active { display: block; }
+
+  .report-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-muted);
+    font-size: 13px;
+    cursor: pointer;
+    margin-bottom: 20px;
+    border: none;
+    background: none;
+    padding: 0;
+  }
+  .report-back:hover { color: var(--white); }
+
+  /* Report header card */
+  .report-hero {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px 28px;
+    margin-bottom: 20px;
+  }
+
+  .report-hero-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 16px;
+  }
+
+  .report-hero h2 {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--white);
+    margin-bottom: 4px;
+  }
+
+  .report-hero .owner { color: var(--text-muted); font-size: 14px; }
+  .report-hero .location { color: var(--text-muted); font-size: 13px; margin-top: 2px; }
+
+  .report-hero .score-block { text-align: right; }
+  .report-hero .big-score {
+    font-size: 36px;
+    font-weight: 800;
+    color: var(--white);
+    font-family: var(--mono);
+    line-height: 1;
+  }
+
+  .report-hero .score-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .report-meta-row {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    font-size: 13px;
+  }
+
+  .meta-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background: var(--surface-2);
+    border-radius: 6px;
+    color: var(--text);
+  }
+
+  .meta-chip .chip-label { color: var(--text-muted); font-size: 11px; }
+
+  /* Report sections */
+  .report-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  @media (max-width: 800px) {
+    .report-grid { grid-template-columns: 1fr; }
+  }
+
+  .report-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .card-title {
+    padding: 12px 16px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .card-body { padding: 16px; }
+
+  .stat-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    font-size: 13px;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+  }
+  .stat-row:last-child { border-bottom: none; }
+  .stat-label { color: var(--text-muted); }
+  .stat-value { color: var(--white); font-family: var(--mono); font-weight: 500; }
+
+  /* Talking points */
+  .talking-points-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+
+  .tp-item {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+  .tp-item:last-child { border-bottom: none; }
+
+  .tp-num {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    background: var(--blue-bg);
+    color: var(--blue);
+    font-size: 12px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .tp-content { flex: 1; }
+  .tp-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--accent);
+    margin-bottom: 2px;
+  }
+  .tp-text { font-size: 13px; color: var(--text); }
+
+  /* State context */
+  .state-context {
+    margin-bottom: 20px;
+  }
+
+  .peer-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    font-size: 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+  }
+  .peer-item:last-child { border-bottom: none; }
+  .peer-name { color: var(--text); }
+  .peer-loc { color: var(--text-muted); }
+  .peer-score { color: var(--text-dim); font-family: var(--mono); }
+
+  /* Limitations */
+  .limitations {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+  }
+
+  .limitations h4 {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--yellow);
+    margin-bottom: 10px;
+  }
+
+  .limitations li {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+    margin-left: 16px;
+  }
+
+  /* Copy / print bar */
+  .action-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .action-btn {
+    padding: 8px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .action-btn:hover { background: var(--surface-2); border-color: var(--accent); }
+  .action-btn.copied { border-color: var(--green); color: var(--green); }
+
+  /* --- Overview (landing) --- */
+  .overview { }
+
+  .overview-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  @media (max-width: 600px) {
+    .overview-stats { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  .overview-stat {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+  }
+
+  .overview-stat .big {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--white);
+    font-family: var(--mono);
+  }
+
+  .overview-stat .label {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 4px;
+  }
+
+  /* State table */
+  .state-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  .state-table th {
+    text-align: left;
+    padding: 10px 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border);
+  }
+  .state-table th.num { text-align: right; }
+
+  .state-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+  }
+  .state-table td.num {
+    text-align: right;
+    font-family: var(--mono);
+    color: var(--text);
+  }
+
+  .state-table tr { cursor: pointer; transition: background 0.1s; }
+  .state-table tbody tr:hover { background: var(--surface-2); }
+
+  .state-link { color: var(--blue); font-weight: 600; text-decoration: none; }
+
+  .footer {
+    text-align: center;
+    padding: 24px;
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+
+  .footer a { color: var(--text-muted); text-decoration: none; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <h1>RMM Intelligence Hub</h1>
+    <span class="badge">33,185 Pharmacies</span>
+  </div>
+  <div class="header-stats" id="headerStats"></div>
+</div>
+
+<div class="container">
+
+  <!-- Search -->
+  <div class="search-bar">
+    <input type="text" class="search-input" id="searchInput"
+      placeholder="Search by NPI, pharmacy name, or owner name..." autocomplete="off">
+    <div class="search-results" id="searchResults"></div>
+  </div>
+
+  <!-- Overview (landing page) -->
+  <div class="overview" id="overviewSection">
+    <div class="overview-stats" id="overviewStats"></div>
+    <div class="report-card">
+      <div class="card-title">States by Grade A Concentration</div>
+      <div class="card-body" style="padding:0">
+        <table class="state-table" id="stateTable">
+          <thead>
+            <tr>
+              <th>State</th>
+              <th class="num">Total</th>
+              <th class="num">Grade A</th>
+              <th class="num">Grade B</th>
+              <th class="num">Grade C</th>
+              <th class="num">Grade D</th>
+            </tr>
+          </thead>
+          <tbody id="stateTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Report view -->
+  <div class="report-view" id="reportSection">
+    <button class="report-back" id="backBtn">&larr; Back to overview</button>
+
+    <!-- Action bar -->
+    <div class="action-bar">
+      <button class="action-btn" id="copyBtn">Copy Report</button>
+      <button class="action-btn" id="printBtn">Print</button>
+    </div>
+
+    <!-- Hero -->
+    <div class="report-hero" id="reportHero"></div>
+
+    <!-- Talking points -->
+    <div class="talking-points-card" id="talkingPoints">
+      <div class="card-title">Outreach Talking Points</div>
+    </div>
+
+    <!-- Data grid -->
+    <div class="report-grid" id="reportGrid"></div>
+
+    <!-- State context -->
+    <div class="state-context" id="stateContext"></div>
+
+    <!-- Limitations -->
+    <div class="limitations">
+      <h4>Limitations</h4>
+      <ul>
+        <li>GLP-1 fill estimates are STATE averages, not pharmacy-specific</li>
+        <li>Individual pharmacy revenue/fill counts are unknown</li>
+        <li>$37/fill loss is NCPA survey average, actual varies by drug and PBM</li>
+        <li>HPSA designation is area-level, not pharmacy-specific</li>
+        <li>We do not know which pharmacies are existing RMM customers</li>
+      </ul>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  RMM Intelligence Hub &middot; Data: CMS, CDC/Census, HRSA, USDA ERS &middot; Feb 2026
+</div>
+
+<script>
+const searchInput = document.getElementById('searchInput');
+const searchResults = document.getElementById('searchResults');
+const overviewSection = document.getElementById('overviewSection');
+const reportSection = document.getElementById('reportSection');
+const backBtn = document.getElementById('backBtn');
+const copyBtn = document.getElementById('copyBtn');
+const printBtn = document.getElementById('printBtn');
+
+let debounceTimer = null;
+let currentReportText = '';
+
+// --- Init ---
+loadOverview();
+
+// --- Search ---
+searchInput.addEventListener('input', () => {
+  clearTimeout(debounceTimer);
+  const q = searchInput.value.trim();
+  if (q.length < 2) { searchResults.classList.remove('open'); return; }
+  debounceTimer = setTimeout(() => doSearch(q), 200);
+});
+
+searchInput.addEventListener('focus', () => {
+  const q = searchInput.value.trim();
+  if (q.length >= 2) doSearch(q);
+});
+
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.search-bar')) searchResults.classList.remove('open');
+});
+
+async function doSearch(q) {
+  const resp = await fetch('/api/search?q=' + encodeURIComponent(q));
+  const results = await resp.json();
+  if (!results.length) { searchResults.classList.remove('open'); return; }
+
+  searchResults.innerHTML = results.map(r => `
+    <div class="result-item" data-npi="${r.npi}">
+      <div class="result-left">
+        <div class="result-name">${esc(r.name)}</div>
+        <div class="result-meta">${esc(r.city)}, ${r.state} ${r.zip} &middot; ${esc(r.owner)}</div>
+        <div class="result-npi">${r.npi} &middot; ${r.phone}</div>
+      </div>
+      <div class="result-right">
+        <div class="result-score">${r.score}</div>
+        <span class="grade-badge grade-${r.grade}">${r.grade} &middot; ${r.priority}</span>
+      </div>
+    </div>
+  `).join('');
+
+  searchResults.classList.add('open');
+
+  searchResults.querySelectorAll('.result-item').forEach(item => {
+    item.addEventListener('click', () => {
+      loadReport(item.dataset.npi);
+      searchResults.classList.remove('open');
+    });
+  });
+}
+
+// --- Overview ---
+async function loadOverview() {
+  const resp = await fetch('/api/states');
+  const data = await resp.json();
+
+  document.getElementById('headerStats').innerHTML = `
+    <span><strong>${data.total_pharmacies.toLocaleString()}</strong> pharmacies</span>
+    <span><strong>${data.grade_counts.A.toLocaleString()}</strong> Grade A</span>
+    <span><strong>${Object.keys(data.grade_counts).length > 0 ? data.states.length : 0}</strong> states</span>
+  `;
+
+  document.getElementById('overviewStats').innerHTML = `
+    <div class="overview-stat"><div class="big">${data.grade_counts.A.toLocaleString()}</div><div class="label">Grade A</div></div>
+    <div class="overview-stat"><div class="big">${data.grade_counts.B.toLocaleString()}</div><div class="label">Grade B</div></div>
+    <div class="overview-stat"><div class="big">${data.grade_counts.C.toLocaleString()}</div><div class="label">Grade C</div></div>
+    <div class="overview-stat"><div class="big">${data.grade_counts.D.toLocaleString()}</div><div class="label">Grade D</div></div>
+  `;
+
+  const tbody = document.getElementById('stateTableBody');
+  tbody.innerHTML = data.states.map(s => `
+    <tr data-state="${s.state}">
+      <td><span class="state-link">${s.state}</span></td>
+      <td class="num">${s.total.toLocaleString()}</td>
+      <td class="num">${s.grade_a.toLocaleString()}</td>
+      <td class="num">${s.grade_b.toLocaleString()}</td>
+      <td class="num">${s.grade_c.toLocaleString()}</td>
+      <td class="num">${s.grade_d.toLocaleString()}</td>
+    </tr>
+  `).join('');
+
+  tbody.querySelectorAll('tr').forEach(row => {
+    row.addEventListener('click', () => {
+      // Could load state detail -- for now just search
+      searchInput.value = '';
+      searchInput.focus();
+    });
+  });
+}
+
+// --- Report ---
+async function loadReport(npi) {
+  overviewSection.style.display = 'none';
+  reportSection.classList.add('active');
+
+  const resp = await fetch('/api/report/' + npi);
+  const data = await resp.json();
+  const p = data.pharmacy;
+  const sc = data.state_context;
+
+  currentReportText = data.report_text;
+
+  // Hero
+  const loss = fmtDollar(p.annual_loss);
+  document.getElementById('reportHero').innerHTML = `
+    <div class="report-hero-top">
+      <div>
+        <h2>${esc(p.name)}</h2>
+        <div class="owner">${esc(p.owner)}</div>
+        <div class="location">${esc(p.city)}, ${p.state} ${p.zip} &middot; ${p.phone}</div>
+      </div>
+      <div class="score-block">
+        <div class="big-score">${p.score}</div>
+        <div class="score-label">RMM Score</div>
+        <span class="grade-badge grade-${p.grade}" style="margin-top:6px">${p.grade} &middot; ${p.priority}</span>
+      </div>
+    </div>
+    <div class="report-meta-row">
+      <div class="meta-chip"><span class="chip-label">NPI</span> ${p.npi}</div>
+      <div class="meta-chip"><span class="chip-label">HPSA</span> ${p.hpsa}${p.hpsa === 'Yes' ? ' (score: ' + p.hpsa_score + ')' : ''}</div>
+      <div class="meta-chip"><span class="chip-label">RUCC</span> ${p.rucc || 'N/A'} ${p.rural ? '(' + p.rural + ')' : ''}</div>
+      <div class="meta-chip"><span class="chip-label">County</span> ${esc(p.county_name)} (${p.county_fips})</div>
+      <div class="meta-chip"><span class="chip-label">Rank</span> #${sc.rank} of ${sc.total.toLocaleString()} in ${sc.state}</div>
+    </div>
+  `;
+
+  // Talking points
+  const tpCard = document.getElementById('talkingPoints');
+  tpCard.innerHTML = '<div class="card-title">Outreach Talking Points</div>' +
+    data.talking_points.map((tp, i) => `
+      <div class="tp-item">
+        <div class="tp-num">${i + 1}</div>
+        <div class="tp-content">
+          <div class="tp-label">${esc(tp.label)}</div>
+          <div class="tp-text">${esc(tp.text)}</div>
+        </div>
+      </div>
+    `).join('');
+
+  // Data grid
+  document.getElementById('reportGrid').innerHTML = `
+    <div class="report-card">
+      <div class="card-title">GLP-1 Exposure</div>
+      <div class="card-body">
+        <div class="stat-row"><span class="stat-label">State GLP-1 Cost/Pharmacy</span><span class="stat-value">${fmtDollar(p.glp1_cost)}</span></div>
+        <div class="stat-row"><span class="stat-label">Est Monthly Fills</span><span class="stat-value">${p.monthly_fills}</span></div>
+        <div class="stat-row"><span class="stat-label">Est Annual Loss</span><span class="stat-value">${loss}</span></div>
+        <div class="stat-row"><span class="stat-label">Loss Formula</span><span class="stat-value">${p.monthly_fills} x 12 x $37</span></div>
+      </div>
+    </div>
+    <div class="report-card">
+      <div class="card-title">ZIP Demographics</div>
+      <div class="card-body">
+        <div class="stat-row"><span class="stat-label">Diabetes Prevalence</span><span class="stat-value">${p.diabetes_pct}%</span></div>
+        <div class="stat-row"><span class="stat-label">Obesity Prevalence</span><span class="stat-value">${p.obesity_pct}%</span></div>
+        <div class="stat-row"><span class="stat-label">Age 65+</span><span class="stat-value">${p.pct_65_plus}%</span></div>
+        <div class="stat-row"><span class="stat-label">Median Income</span><span class="stat-value">${fmtDollar(p.median_income)}</span></div>
+        <div class="stat-row"><span class="stat-label">Population</span><span class="stat-value">${Number(p.population).toLocaleString()}</span></div>
+      </div>
+    </div>
+  `;
+
+  // State context + peers
+  document.getElementById('stateContext').innerHTML = `
+    <div class="report-card">
+      <div class="card-title">${sc.state} Market Context</div>
+      <div class="card-body">
+        <div class="stat-row"><span class="stat-label">Total Pharmacies</span><span class="stat-value">${sc.total.toLocaleString()}</span></div>
+        <div class="stat-row"><span class="stat-label">Grade A</span><span class="stat-value">${sc.grade_a} (${sc.concentration}%)</span></div>
+        <div class="stat-row"><span class="stat-label">This Pharmacy Ranks</span><span class="stat-value">#${sc.rank} of ${sc.total.toLocaleString()}</span></div>
+        ${sc.peers.length ? '<div style="margin-top:12px;font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Grade ' + p.grade + ' Peers in ' + sc.state + '</div>' : ''}
+        ${sc.peers.map(pr => `
+          <div class="peer-item">
+            <span class="peer-name">${esc(pr.name)}</span>
+            <span class="peer-loc">${esc(pr.city)}</span>
+            <span class="peer-score">${pr.score}</span>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+
+  window.scrollTo(0, 0);
+}
+
+// --- Back ---
+backBtn.addEventListener('click', () => {
+  reportSection.classList.remove('active');
+  overviewSection.style.display = '';
+  searchInput.value = '';
+});
+
+// --- Copy ---
+copyBtn.addEventListener('click', () => {
+  navigator.clipboard.writeText(currentReportText).then(() => {
+    copyBtn.textContent = 'Copied';
+    copyBtn.classList.add('copied');
+    setTimeout(() => {
+      copyBtn.textContent = 'Copy Report';
+      copyBtn.classList.remove('copied');
+    }, 2000);
+  });
+});
+
+// --- Print ---
+printBtn.addEventListener('click', () => {
+  const w = window.open('', '_blank');
+  w.document.write('<pre style="font-family:monospace;font-size:12px;white-space:pre-wrap;max-width:800px;margin:20px auto">' + esc(currentReportText) + '</pre>');
+  w.document.close();
+  w.print();
+});
+
+// --- Helpers ---
+function esc(s) {
+  if (!s) return '';
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function fmtDollar(val) {
+  if (!val || val === 'N/A') return 'N/A';
+  const n = Number(val);
+  if (isNaN(n)) return val;
+  return '$' + Math.round(n).toLocaleString();
+}
+</script>
+
+</body>
+</html>
