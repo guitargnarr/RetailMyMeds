@@ -111,9 +111,10 @@ def format_currency(val: object) -> str:
 
 # --- Main ---
 
-def score_pharmacies(
-    input_path: str, output_dir: str,
-) -> list[dict[str, object]]:
+ScoredRow = dict[str, object]
+
+
+def score_pharmacies(input_path: str, output_dir: str) -> list[ScoredRow]:
     """Score pharmacies from clean CSV and write targeting CSVs."""
 
     df = pd.read_csv(
@@ -275,8 +276,9 @@ def score_pharmacies(
 
     # RUCC summary
     rucc_filled = sum(1 for r in output_rows if r['rucc_code'] != '')
+    rucc_pct = rucc_filled / n * 100
     print(f"\nRUCC coverage: {rucc_filled:,}/{n:,} "
-          f"({rucc_filled/n*100:.1f}%)")
+          f"({rucc_pct:.1f}%)")
     rural_counts = Counter(r['rural_classification'] for r in output_rows
                            if r['rural_classification'])
     for cls in ['Metro', 'Rural-Adjacent', 'Rural-Remote']:

@@ -157,8 +157,9 @@ def build_zip_lookup() -> dict[str, RuccInfo]:
             matched += 1
 
     total_zips = len(zip_to_county)
+    pct = matched / total_zips * 100
     print(f"RUCC lookup: {matched:,}/{total_zips:,} ZIPs mapped "
-          f"({matched/total_zips*100:.1f}%)")
+          f"({pct:.1f}%)")
     print(f"  Counties with RUCC: {len(rucc_by_fips):,}")
 
     return lookup
