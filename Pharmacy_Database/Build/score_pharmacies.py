@@ -30,7 +30,7 @@ Grade assignment by cumulative cutoff using round():
 
 Usage:
   python3 score_pharmacies.py
-  python3 score_pharmacies.py --input /path/to/clean.csv --output-dir /path/to/output/
+  python3 score_pharmacies.py --input clean.csv --output-dir out/
 
 Dependencies: pandas, numpy (standard data science stack)
 """
@@ -44,6 +44,8 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+
+from rucc_enrich import build_zip_lookup
 
 # --- Configuration ---
 
@@ -86,6 +88,7 @@ OUTPUT_COLUMNS = [
     'hpsa_designated', 'hpsa_score',
     'zip_diabetes_pct', 'zip_obesity_pct', 'zip_pct_65_plus',
     'zip_median_income', 'zip_population', 'state_glp1_cost_per_pharmacy',
+    'county_fips', 'county_name', 'rucc_code', 'rural_classification',
 ]
 
 
@@ -108,23 +111,33 @@ def format_currency(val: object) -> str:
 
 # --- Main ---
 
-def score_pharmacies(input_path: str, output_dir: str) -> list[dict[str, object]]:
+def score_pharmacies(
+    input_path: str, output_dir: str,
+) -> list[dict[str, object]]:
     """Score pharmacies from clean CSV and write targeting CSVs."""
 
-    df = pd.read_csv(input_path, dtype={'npi': str, 'zip': str, 'phone': str})
+    df = pd.read_csv(
+        input_path, dtype={'npi': str, 'zip': str, 'phone': str},
+    )
     n = len(df)
     print(f"Scoring {n:,} pharmacies from {input_path}")
 
     # Convert numeric columns
-    numeric_cols = ['state_glp1_cost_per_pharmacy', 'zip_diabetes_pct', 'zip_obesity_pct',
-                    'zip_pct_65_plus', 'zip_median_income', 'zip_population',
-                    'hpsa_score', 'hpsa_designated', 'state_glp1_claims_per_pharmacy']
+    numeric_cols = [
+        'state_glp1_cost_per_pharmacy',
+        'zip_diabetes_pct', 'zip_obesity_pct',
+        'zip_pct_65_plus', 'zip_median_income',
+        'zip_population', 'hpsa_score',
+        'hpsa_designated',
+        'state_glp1_claims_per_pharmacy',
+    ]
     for col in numeric_cols:
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors='coerce')
 
-    # Null handling: only sentinel income values become NaN (zero stays as real value)
-    df.loc[df['zip_median_income'] < -999999, 'zip_median_income'] = np.nan
+    # Null handling: sentinel income -> NaN (zero stays)
+    sentinel = df['zip_median_income'] < -999999
+    df.loc[sentinel, 'zip_median_income'] = np.nan
 
     # --- Compute percentile ranks ---
 
@@ -142,22 +155,31 @@ def score_pharmacies(input_path: str, output_dir: str) -> list[dict[str, object]
     df['hpsa_score_rank'] = (df['hpsa_designated'] > 0).astype(float) * 100
 
     # --- Composite score ---
+    w = WEIGHTS
+    r = {k: df[f'{k}_rank'] for k in w}
     df['rmm_score'] = (
-        WEIGHTS['state_glp1_cost_per_pharmacy'] * df['state_glp1_cost_per_pharmacy_rank']
-        + WEIGHTS['zip_diabetes_pct'] * df['zip_diabetes_pct_rank']
-        + WEIGHTS['zip_pct_65_plus'] * df['zip_pct_65_plus_rank']
-        + WEIGHTS['zip_obesity_pct'] * df['zip_obesity_pct_rank']
-        + WEIGHTS['hpsa_score'] * df['hpsa_score_rank']
-        + WEIGHTS['zip_median_income'] * df['zip_median_income_rank']
-        + WEIGHTS['zip_population'] * df['zip_population_rank']
+        w['state_glp1_cost_per_pharmacy'] * r['state_glp1_cost_per_pharmacy']
+        + w['zip_diabetes_pct'] * r['zip_diabetes_pct']
+        + w['zip_pct_65_plus'] * r['zip_pct_65_plus']
+        + w['zip_obesity_pct'] * r['zip_obesity_pct']
+        + w['hpsa_score'] * r['hpsa_score']
+        + w['zip_median_income'] * r['zip_median_income']
+        + w['zip_population'] * r['zip_population']
     ).round(1)
 
     # --- GLP-1 fill estimates ---
-    df['est_monthly_glp1_fills'] = (df['state_glp1_claims_per_pharmacy'] / 12).round(0).fillna(0).astype(int)
-    df['est_annual_glp1_loss'] = (df['state_glp1_claims_per_pharmacy'] * LOSS_PER_FILL).round(0).fillna(0).astype(int)
+    claims = df['state_glp1_claims_per_pharmacy']
+    df['est_monthly_glp1_fills'] = (
+        (claims / 12).round(0).fillna(0).astype(int)
+    )
+    df['est_annual_glp1_loss'] = (
+        (claims * LOSS_PER_FILL).round(0).fillna(0).astype(int)
+    )
 
     # --- Sort by score descending ---
-    df = df.sort_values('rmm_score', ascending=False).reset_index(drop=True)
+    df = df.sort_values(
+        'rmm_score', ascending=False,
+    ).reset_index(drop=True)
 
     # --- Assign grades using round() cumulative cutoffs ---
     cumulative_cuts = {}
@@ -173,13 +195,20 @@ def score_pharmacies(input_path: str, output_dir: str) -> list[dict[str, object]
     df['grade'] = [assign_grade(i) for i in range(n)]
     df['outreach_priority'] = df['grade'].map(GRADE_PRIORITY)
 
+    # --- Build RUCC lookup ---
+    rucc_lookup = build_zip_lookup()
+
     # --- Format output columns ---
     output_rows = []
     for _, row in df.iterrows():
         income_val = row['zip_median_income']
+        zip5 = str(row.get('zip', '')).strip()[:5]
+        rucc_info = rucc_lookup.get(zip5, {})
         output_rows.append({
             'npi': row['npi'],
-            'pharmacy_name': row.get('display_name', row.get('pharmacy_name', '')),
+            'pharmacy_name': row.get(
+                'display_name', row.get('pharmacy_name', ''),
+            ),
             'owner_name': row.get('owner_name', ''),
             'city': row.get('city', ''),
             'state': row.get('state', ''),
@@ -193,14 +222,23 @@ def score_pharmacies(input_path: str, output_dir: str) -> list[dict[str, object]
                 format_currency(row['est_annual_glp1_loss'])
                 if row['est_annual_glp1_loss'] else '$0'
             ),
-            'hpsa_designated': 'Yes' if int(row.get('hpsa_designated', 0) or 0) else 'No',
+            'hpsa_designated': (
+                'Yes' if int(row.get('hpsa_designated', 0) or 0)
+                else 'No'
+            ),
             'hpsa_score': int(row.get('hpsa_score', 0) or 0),
             'zip_diabetes_pct': row.get('zip_diabetes_pct', ''),
             'zip_obesity_pct': row.get('zip_obesity_pct', ''),
             'zip_pct_65_plus': row.get('zip_pct_65_plus', ''),
             'zip_median_income': format_currency(income_val),
             'zip_population': row.get('zip_population', ''),
-            'state_glp1_cost_per_pharmacy': format_currency(row.get('state_glp1_cost_per_pharmacy')),
+            'state_glp1_cost_per_pharmacy': format_currency(
+                row.get('state_glp1_cost_per_pharmacy'),
+            ),
+            'county_fips': rucc_info.get('county_fips', ''),
+            'county_name': rucc_info.get('county_name', ''),
+            'rucc_code': rucc_info.get('rucc_code', ''),
+            'rural_classification': rucc_info.get('rural_classification', ''),
         })
 
     # --- Write CSVs ---
@@ -235,21 +273,35 @@ def score_pharmacies(input_path: str, output_dir: str) -> list[dict[str, object]
     print(f"\nWrote {len(output_rows):,} to {output_full}")
     print(f"Wrote {len(grade_a):,} Grade A to {output_a}")
 
+    # RUCC summary
+    rucc_filled = sum(1 for r in output_rows if r['rucc_code'] != '')
+    print(f"\nRUCC coverage: {rucc_filled:,}/{n:,} "
+          f"({rucc_filled/n*100:.1f}%)")
+    rural_counts = Counter(r['rural_classification'] for r in output_rows
+                           if r['rural_classification'])
+    for cls in ['Metro', 'Rural-Adjacent', 'Rural-Remote']:
+        cnt = rural_counts.get(cls, 0)
+        print(f"  {cls}: {cnt:,}")
+
     # Kentucky check
     ky = [r for r in output_rows if r['state'] == 'KY']
     ky_a = [r for r in ky if r['grade'] == 'A']
     print(f"\nKentucky: {len(ky)} total, {len(ky_a)} Grade A")
     if ky_a:
-        print(f"  Top KY: {ky_a[0]['pharmacy_name']}, {ky_a[0]['city']} (score: {ky_a[0]['rmm_score']})")
+        top = ky_a[0]
+        print(f"  Top KY: {top['pharmacy_name']}, "
+              f"{top['city']} (score: {top['rmm_score']})")
 
     # Arica's pharmacy check
     arica = [r for r in output_rows if r['npi'] == '1497754923']
     if arica:
         a = arica[0]
-        print(f"\nCentral Kentucky Apothecary (Arica Collins): score {a['rmm_score']}, grade {a['grade']}")
+        print(f"\nCentral Kentucky Apothecary: "
+              f"score {a['rmm_score']}, grade {a['grade']}")
 
     # Big Jim's check
-    bigjim = [r for r in output_rows if 'BIG JIM' in r['pharmacy_name'].upper()]
+    bigjim = [r for r in output_rows
+              if 'BIG JIM' in r['pharmacy_name'].upper()]
     for b in bigjim:
         print(f"Big Jim's: {b['pharmacy_name']}, {b['city']}, {b['state']}"
               f" (score: {b['rmm_score']}, grade: {b['grade']})")
@@ -259,12 +311,22 @@ def score_pharmacies(input_path: str, output_dir: str) -> list[dict[str, object]
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='RMM Pharmacy Scoring Engine')
-    parser.add_argument('--input', default=None, help='Path to clean verified CSV')
-    parser.add_argument('--output-dir', default=None, help='Output directory for targeting CSVs')
+    parser.add_argument(
+        '--input', default=None,
+        help='Path to clean verified CSV',
+    )
+    parser.add_argument(
+        '--output-dir', default=None,
+        help='Output directory for targeting CSVs',
+    )
     args = parser.parse_args()
 
     repo_root = Path(__file__).resolve().parent.parent.parent
-    input_path = args.input or repo_root / 'State_Outreach_Lists_Verified' / 'ALL_VERIFIED_CLEAN.csv'
+    input_path = (
+        args.input
+        or repo_root / 'State_Outreach_Lists_Verified'
+        / 'ALL_VERIFIED_CLEAN.csv'
+    )
     output_dir = args.output_dir or repo_root / 'Deliverables'
 
     if not os.path.exists(input_path):
