@@ -204,7 +204,9 @@ def _outreach_talking_points(pharmacy: dict) -> str:
             f"need for cost-conscious pharmacy services."
         )
 
-    return '\n'.join(f"  {i+1}. {p}" for i, p in enumerate(points))
+    return '\n'.join(
+        f"  {i + 1}. {p}" for i, p in enumerate(points)
+    )
 
 
 def _limitations() -> str:
