@@ -1227,7 +1227,23 @@ let sortCol = 'score';
 let sortDir = 'desc';
 const stateSection = $('stateSection');
 
-loadOverview();
+// URL routing
+function updateURL(params) {
+  const url = new URL(window.location);
+  url.search = '';
+  Object.entries(params).forEach(([k, v]) => { if (v) url.searchParams.set(k, v); });
+  history.replaceState(null, '', url);
+}
+
+function routeFromURL() {
+  const params = new URLSearchParams(window.location.search);
+  const npi = params.get('npi');
+  const state = params.get('state');
+  if (npi) { loadReport(npi); return; }
+  if (state) { loadStateView(state, params.get('grade') || ''); return; }
+}
+
+loadOverview().then(routeFromURL);
 
 document.addEventListener('keydown', e => {
   if (e.key === '/' && document.activeElement !== searchInput) { e.preventDefault(); searchInput.focus(); }
@@ -1338,7 +1354,9 @@ async function loadOverview() {
 async function loadReport(npi) {
   showLoading(true);
   overviewSection.style.display = 'none';
+  stateSection.classList.remove('active');
   reportSection.classList.add('active');
+  updateURL({npi: npi});
 
   try {
     const resp = await fetch('/api/report/' + npi);
@@ -1444,6 +1462,9 @@ async function loadStateView(state, grade) {
   overviewSection.style.display = 'none';
   reportSection.classList.remove('active');
   stateSection.classList.add('active');
+  const params = {state: state};
+  if (grade) params.grade = grade;
+  updateURL(params);
 
   try {
     const url = '/api/state/' + state + (grade ? '?grade=' + grade : '');
@@ -1543,16 +1564,19 @@ document.addEventListener('click', e => {
 });
 
 // Navigation
-$('stateBackBtn').addEventListener('click', () => {
+function goHome() {
+  reportSection.classList.remove('active');
   stateSection.classList.remove('active');
   overviewSection.style.display = '';
   searchInput.value = '';
   currentStateCode = '';
   currentStateGrade = '';
-});
+  updateURL({});
+}
 
-$('backBtn').addEventListener('click', () => { reportSection.classList.remove('active'); stateSection.classList.remove('active'); overviewSection.style.display = ''; searchInput.value = ''; });
-$('headerLogo').addEventListener('click', () => { reportSection.classList.remove('active'); stateSection.classList.remove('active'); overviewSection.style.display = ''; searchInput.value = ''; });
+$('stateBackBtn').addEventListener('click', goHome);
+$('backBtn').addEventListener('click', goHome);
+$('headerLogo').addEventListener('click', goHome);
 
 $('copyBtn').addEventListener('click', () => {
   navigator.clipboard.writeText(currentReportText).then(() => {
