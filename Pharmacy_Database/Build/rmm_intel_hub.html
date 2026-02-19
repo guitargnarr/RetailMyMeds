@@ -204,6 +204,7 @@
   .search-wrapper {
     position: relative;
     margin-bottom: 24px;
+    z-index: 300;
   }
 
   .search-container {
@@ -1178,12 +1179,19 @@ async function loadOverview() {
     // State count
     $('stateCount').textContent = data.states.length + ' states';
 
+    // Sort states by Grade A concentration (A%), not raw count
+    const sortedStates = [...data.states].sort((a, b) => {
+      const aPct = a.total ? (a.grade_a / a.total) : 0;
+      const bPct = b.total ? (b.grade_a / b.total) : 0;
+      return bPct - aPct;
+    });
+
     // Compute max Grade A for bar widths
-    const maxA = Math.max(...data.states.map(s => s.grade_a));
+    const maxA = Math.max(...sortedStates.map(s => s.grade_a));
 
     // State table
     const tbody = $('stateTableBody');
-    tbody.innerHTML = data.states.map(s => {
+    tbody.innerHTML = sortedStates.map(s => {
       const aPct = s.total ? ((s.grade_a / s.total) * 100).toFixed(1) : '0.0';
       const barW = Math.round((s.grade_a / maxA) * 60);
       return `
