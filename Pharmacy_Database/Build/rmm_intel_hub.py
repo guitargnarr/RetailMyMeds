@@ -12,9 +12,11 @@ Usage:
 Kevin and Arica open http://localhost:5199 and use it.
 """
 
+import csv
+import io
 from pathlib import Path
 
-from flask import Flask, jsonify, request, send_file
+from flask import Flask, Response, jsonify, request, send_file
 
 from pharmacy_intel import (
     GRADE_COUNTS,
@@ -122,6 +124,56 @@ def api_state(state):
         ],
         'report_text': generate_state_summary(st, grade),
     })
+
+
+@app.route('/api/state/<state>/export')
+def api_state_export(state):
+    """Export all matching pharmacies as downloadable CSV."""
+    grade = request.args.get('grade', '').upper() or None
+    st = state.upper()
+
+    if st not in _by_state:
+        return jsonify({'error': f'State {st} not found'}), 404
+
+    rows = _by_state[st]
+    if grade:
+        rows = [r for r in rows if r['grade'] == grade]
+
+    sorted_rows = sorted(
+        rows,
+        key=lambda r: _safe_float(r.get('rmm_score', 0)),
+        reverse=True,
+    )
+
+    output = io.StringIO()
+    fieldnames = [
+        'npi', 'pharmacy_name', 'owner_name',
+        'city', 'state', 'zip', 'phone',
+        'grade', 'rmm_score', 'outreach_priority',
+        'est_annual_glp1_loss', 'hpsa_designated',
+        'zip_diabetes_pct', 'zip_obesity_pct',
+    ]
+    writer = csv.DictWriter(
+        output,
+        fieldnames=fieldnames,
+        extrasaction='ignore',
+    )
+    writer.writeheader()
+    writer.writerows(sorted_rows)
+
+    csv_bytes = output.getvalue().encode('utf-8')
+    grade_suffix = f'_grade{grade}' if grade else ''
+    filename = f'rmm_{st}{grade_suffix}.csv'
+
+    return Response(
+        csv_bytes,
+        mimetype='text/csv',
+        headers={
+            'Content-Disposition': (
+                f'attachment; filename="{filename}"'
+            ),
+        },
+    )
 
 
 @app.route('/api/states')

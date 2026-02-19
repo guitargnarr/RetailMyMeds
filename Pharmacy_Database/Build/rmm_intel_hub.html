@@ -858,6 +858,153 @@
   }
 
   /* ============================================================
+     STATE DRILL-DOWN VIEW
+     ============================================================ */
+  .state-view { display: none; }
+  .state-view.active { display: block; }
+
+  .state-view-header {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 24px 28px;
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  }
+  .state-view-header::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--teal), var(--teal-light), transparent 60%);
+  }
+
+  .state-view-title {
+    font-family: var(--font-display);
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.3px;
+    margin-bottom: 4px;
+  }
+
+  .state-view-subtitle {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+  }
+
+  .state-grade-badges {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+
+  .grade-summary-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: var(--radius-sm);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .grade-summary-chip.grade-A { background: var(--grade-a-bg); color: var(--grade-a); border: 1px solid var(--grade-a-border); }
+  .grade-summary-chip.grade-B { background: var(--grade-b-bg); color: var(--grade-b); border: 1px solid var(--grade-b-border); }
+  .grade-summary-chip.grade-C { background: var(--grade-c-bg); color: var(--grade-c); border: 1px solid var(--grade-c-border); }
+  .grade-summary-chip.grade-D { background: var(--grade-d-bg); color: var(--grade-d); border: 1px solid var(--grade-d-border); }
+
+  .grade-filter-bar {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .grade-filter-btn {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 6px 14px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--surface-alt);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.3px;
+  }
+  .grade-filter-btn:hover { border-color: var(--teal); color: var(--teal-dark); }
+  .grade-filter-btn.active-filter { background: var(--teal); border-color: var(--teal-dark); color: white; }
+  .grade-filter-btn.filter-A.active-filter { background: var(--grade-a); border-color: var(--grade-a); }
+  .grade-filter-btn.filter-B.active-filter { background: var(--grade-b); border-color: var(--grade-b); }
+  .grade-filter-btn.filter-C.active-filter { background: var(--grade-c); border-color: var(--grade-c); }
+  .grade-filter-btn.filter-D.active-filter { background: var(--grade-d); border-color: var(--grade-d); }
+
+  .state-export-btn {
+    margin-left: auto;
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 500;
+    padding: 6px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    text-decoration: none;
+  }
+  .state-export-btn:hover { border-color: var(--teal); color: var(--teal-dark); background: var(--teal-50); }
+
+  .pharmacy-table { width: 100%; border-collapse: collapse; }
+  .pharmacy-table thead th {
+    position: sticky;
+    top: 0;
+    background: var(--surface-alt);
+    font-family: var(--font-display);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    padding: 10px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  .pharmacy-table thead th.num { text-align: right; }
+  .pharmacy-table thead th.sortable { cursor: pointer; user-select: none; }
+  .pharmacy-table thead th.sortable:hover { color: var(--teal-dark); }
+  .pharmacy-table thead th .sort-arrow { margin-left: 4px; opacity: 0.4; font-size: 10px; }
+  .pharmacy-table thead th.sort-active .sort-arrow { opacity: 1; color: var(--teal); }
+
+  .pharmacy-table tbody td {
+    padding: 10px 16px;
+    font-size: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .pharmacy-table tbody td.num {
+    text-align: right;
+    font-family: var(--font-mono);
+    font-weight: 500;
+    color: var(--text-secondary);
+    font-size: 13px;
+  }
+  .pharmacy-table tbody tr { cursor: pointer; transition: background 0.1s; }
+  .pharmacy-table tbody tr:hover { background: var(--teal-50); }
+  .pharmacy-table tbody tr:last-child td { border-bottom: none; }
+
+  .ph-name { font-weight: 500; color: var(--text-primary); }
+  .ph-owner { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+
+  /* ============================================================
      FOOTER
      ============================================================ */
   .footer {
@@ -929,7 +1076,7 @@
     <div class="search-container">
       <span class="search-icon">&#x1F50D;</span>
       <input type="text" class="search-input" id="searchInput"
-        placeholder="Search NPI, pharmacy name, or owner..." autocomplete="off">
+        placeholder="Search NPI, name, owner, city, or ZIP..." autocomplete="off">
       <span class="search-shortcut">/</span>
     </div>
     <div class="search-results" id="searchResults"></div>
@@ -981,6 +1128,40 @@
             </tr>
           </thead>
           <tbody id="stateTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- STATE DRILL-DOWN VIEW -->
+  <section class="state-view" id="stateSection">
+    <div class="report-nav animate-in">
+      <button class="back-btn" id="stateBackBtn">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 3L5 8l5 5"/></svg>
+        Overview
+      </button>
+    </div>
+
+    <div class="state-view-header animate-in animate-in-1" id="stateHeader"></div>
+
+    <div class="table-wrapper animate-in animate-in-2">
+      <div class="table-header">
+        <span class="table-title" id="stateTableTitle">Pharmacies</span>
+        <span class="table-count" id="statePharmacyCount"></span>
+      </div>
+      <div style="max-height: 600px; overflow-y: auto;">
+        <table class="pharmacy-table" id="pharmacyTable">
+          <thead>
+            <tr>
+              <th class="sortable" data-col="name">Name <span class="sort-arrow"></span></th>
+              <th class="num sortable" data-col="score">Score <span class="sort-arrow"></span></th>
+              <th>Grade</th>
+              <th>City</th>
+              <th class="num sortable" data-col="annual_loss">Annual Loss <span class="sort-arrow"></span></th>
+              <th>HPSA</th>
+            </tr>
+          </thead>
+          <tbody id="pharmacyTableBody"></tbody>
         </table>
       </div>
     </div>
@@ -1039,6 +1220,12 @@ const loadingBar = $('loadingBar');
 let debounceTimer = null;
 let currentReportText = '';
 let totalPharmacies = 0;
+let currentStateCode = '';
+let currentStateGrade = '';
+let currentPharmacies = [];
+let sortCol = 'score';
+let sortDir = 'desc';
+const stateSection = $('stateSection');
 
 loadOverview();
 
@@ -1143,11 +1330,7 @@ async function loadOverview() {
     }).join('');
 
     tbody.querySelectorAll('tr').forEach(row => {
-      row.addEventListener('click', () => {
-        searchInput.value = row.dataset.state;
-        searchInput.focus();
-        doSearch(row.dataset.state);
-      });
+      row.addEventListener('click', () => loadStateView(row.dataset.state, ''));
     });
   } finally { showLoading(false); }
 }
@@ -1251,8 +1434,125 @@ async function loadReport(npi) {
   } finally { showLoading(false); }
 }
 
-$('backBtn').addEventListener('click', () => { reportSection.classList.remove('active'); overviewSection.style.display = ''; searchInput.value = ''; });
-$('headerLogo').addEventListener('click', () => { reportSection.classList.remove('active'); overviewSection.style.display = ''; searchInput.value = ''; });
+// --- State drill-down ---
+
+async function loadStateView(state, grade) {
+  showLoading(true);
+  currentStateCode = state;
+  currentStateGrade = grade || '';
+
+  overviewSection.style.display = 'none';
+  reportSection.classList.remove('active');
+  stateSection.classList.add('active');
+
+  try {
+    const url = '/api/state/' + state + (grade ? '?grade=' + grade : '');
+    const resp = await fetch(url);
+    const data = await resp.json();
+    const sum = data.summary;
+    const gradeFilter = data.grade_filter || '';
+
+    const gradeChips = ['A','B','C','D'].map(g => {
+      const count = sum['grade_' + g.toLowerCase()] || 0;
+      return '<span class="grade-summary-chip grade-' + g + '">' + count.toLocaleString() + ' Grade ' + g + '</span>';
+    }).join('');
+
+    const filterBtns = ['All','A','B','C','D'].map(g => {
+      const isActive = (g === 'All' && !gradeFilter) || g === gradeFilter;
+      const cls = 'grade-filter-btn filter-' + g + (isActive ? ' active-filter' : '');
+      const gradeArg = g === 'All' ? '' : g;
+      return '<button class="' + cls + '" data-grade="' + gradeArg + '">' + (g === 'All' ? 'All Grades' : 'Grade ' + g) + '</button>';
+    }).join('');
+
+    const exportUrl = '/api/state/' + state + '/export' + (gradeFilter ? '?grade=' + gradeFilter : '');
+
+    $('stateHeader').innerHTML =
+      '<div class="state-view-title">' + state + '</div>' +
+      '<div class="state-view-subtitle">' +
+        (gradeFilter ? 'Grade ' + gradeFilter + ' — ' + data.total.toLocaleString() + ' pharmacies (of ' + sum.total.toLocaleString() + ' total)' : sum.total.toLocaleString() + ' pharmacies') +
+      '</div>' +
+      '<div class="state-grade-badges">' + gradeChips + '</div>' +
+      '<div class="grade-filter-bar">' + filterBtns +
+        '<a class="state-export-btn" href="' + exportUrl + '" download>' +
+          '<svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v9m-4-4l4 4 4-4"/><rect x="2" y="12" width="12" height="2" rx="1"/></svg>' +
+          'Export CSV' +
+        '</a>' +
+      '</div>';
+
+    // Wire filter buttons
+    $('stateHeader').querySelectorAll('.grade-filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => loadStateView(state, btn.dataset.grade));
+    });
+
+    $('stateTableTitle').textContent = gradeFilter ? 'Grade ' + gradeFilter + ' Pharmacies (Top 50 by Score)' : 'Top 50 Pharmacies by Score';
+    $('statePharmacyCount').textContent = data.pharmacies.length + ' shown of ' + data.total.toLocaleString();
+
+    currentPharmacies = data.pharmacies;
+    sortCol = 'score';
+    sortDir = 'desc';
+    renderPharmacyTable(currentPharmacies);
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } finally { showLoading(false); }
+}
+
+function renderPharmacyTable(pharmacies) {
+  // Update sort arrows
+  document.querySelectorAll('#pharmacyTable thead th.sortable').forEach(th => {
+    th.classList.remove('sort-active');
+    const arrow = th.querySelector('.sort-arrow');
+    if (th.dataset.col === sortCol) {
+      th.classList.add('sort-active');
+      arrow.textContent = sortDir === 'asc' ? ' \u25B2' : ' \u25BC';
+    } else {
+      arrow.textContent = '';
+    }
+  });
+
+  const tbody = $('pharmacyTableBody');
+  tbody.innerHTML = pharmacies.map(r =>
+    '<tr data-npi="' + r.npi + '">' +
+      '<td><div class="ph-name">' + esc(r.name) + '</div><div class="ph-owner">' + esc(r.owner) + ' &middot; ' + r.zip + '</div></td>' +
+      '<td class="num">' + r.score + '</td>' +
+      '<td><span class="grade-badge grade-' + r.grade + '">' + r.grade + '</span></td>' +
+      '<td>' + esc(r.city) + '</td>' +
+      '<td class="num">' + fmtDollar(r.annual_loss) + '</td>' +
+      '<td>' + (r.hpsa === 'Yes' ? '<span class="grade-badge grade-A">HPSA</span>' : '<span style="color:var(--text-dim)">\u2014</span>') + '</td>' +
+    '</tr>'
+  ).join('');
+
+  tbody.querySelectorAll('tr').forEach(row => {
+    row.addEventListener('click', () => loadReport(row.dataset.npi));
+  });
+}
+
+// Column sort handler
+document.addEventListener('click', e => {
+  const th = e.target.closest('#pharmacyTable thead th.sortable');
+  if (!th) return;
+  const col = th.dataset.col;
+  if (sortCol === col) { sortDir = sortDir === 'asc' ? 'desc' : 'asc'; }
+  else { sortCol = col; sortDir = 'desc'; }
+  const sorted = [...currentPharmacies].sort((a, b) => {
+    if (col === 'name') { return sortDir === 'asc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name); }
+    const av = parseFloat(col === 'score' ? a.score : a.annual_loss) || 0;
+    const bv = parseFloat(col === 'score' ? b.score : b.annual_loss) || 0;
+    return sortDir === 'asc' ? av - bv : bv - av;
+  });
+  renderPharmacyTable(sorted);
+});
+
+// Navigation
+$('stateBackBtn').addEventListener('click', () => {
+  stateSection.classList.remove('active');
+  overviewSection.style.display = '';
+  searchInput.value = '';
+  currentStateCode = '';
+  currentStateGrade = '';
+});
+
+$('backBtn').addEventListener('click', () => { reportSection.classList.remove('active'); stateSection.classList.remove('active'); overviewSection.style.display = ''; searchInput.value = ''; });
+$('headerLogo').addEventListener('click', () => { reportSection.classList.remove('active'); stateSection.classList.remove('active'); overviewSection.style.display = ''; searchInput.value = ''; });
 
 $('copyBtn').addEventListener('click', () => {
   navigator.clipboard.writeText(currentReportText).then(() => {

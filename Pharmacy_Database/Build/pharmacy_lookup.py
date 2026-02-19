@@ -175,20 +175,59 @@ def build_enriched_question(
 # --- Convenience: search by query (NPI or name) ---
 
 
+def _safe_float(val) -> float:
+    """Convert to float, return 0.0 on failure."""
+    try:
+        return float(val)
+    except (ValueError, TypeError):
+        return 0.0
+
+
 def search(query: str, limit: int = 20) -> list[dict]:
-    """Search by NPI (exact) or name (substring)."""
+    """Combined search across NPI, name, owner, city, ZIP.
+
+    Priority: NPI exact match first (10-digit).
+    Then scans pharmacy_name, owner_name, city (substring)
+    and zip (prefix). Deduplicates by NPI, sorts by
+    rmm_score descending.
+    """
     q = query.strip()
     if not q:
         return []
 
-    # Try NPI first (all digits, 10 chars)
+    # 1. NPI exact match (10-digit all-numeric)
     if q.isdigit() and len(q) == 10:
         row = lookup_npi(q)
         if row:
             return [row]
 
-    # Fall back to name search
-    return search_name(q, limit=limit)
+    q_lower = q.lower()
+    seen: set[str] = set()
+    results: list[dict] = []
+
+    def _add(row: dict) -> None:
+        npi = row.get('npi', '')
+        if npi not in seen:
+            seen.add(npi)
+            results.append(row)
+
+    # 2. Name, owner, city substring + ZIP prefix
+    for row in _all_rows:
+        if q_lower in row.get('pharmacy_name', '').lower():
+            _add(row)
+        elif q_lower in row.get('owner_name', '').lower():
+            _add(row)
+        elif q_lower in row.get('city', '').lower():
+            _add(row)
+        elif row.get('zip', '').startswith(q):
+            _add(row)
+
+    # Sort by score descending
+    results.sort(
+        key=lambda r: _safe_float(r.get('rmm_score', 0)),
+        reverse=True,
+    )
+    return results[:limit]
 
 
 # --- CLI test ---
