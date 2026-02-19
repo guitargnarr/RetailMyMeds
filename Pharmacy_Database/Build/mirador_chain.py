@@ -2,7 +2,7 @@
 """
 Mirador Chain-of-Thought Pipeline
 ===================================
-Model 1 (rmm-pharmacy-expert) --> Model 2 (deepseek-r1:7b)
+Model 1 (rmm-pharmacy-expert) --> Model 2 (rmm-chain-analyst)
 
 Emulates the Mirador framework: domain expert produces structured
 analysis, then a chain-of-thought reasoner synthesizes, challenges,
@@ -30,35 +30,20 @@ from pathlib import Path
 # --- Configuration ---
 
 MODEL_1 = 'rmm-pharmacy-expert'
-MODEL_2 = 'deepseek-r1:7b'
+MODEL_2 = 'rmm-chain-analyst'
 DEFAULT_LOG = Path(__file__).resolve().parent / 'mirador_chain_log.txt'
 
 CHAIN_PROMPT_TEMPLATE = textwrap.dedent("""\
-    You are a strategic analyst receiving output from a pharmacy \
-    market intelligence system. Your job is to:
-
-    1. VALIDATE: Check if the claims are internally consistent \
-    and well-supported
-    2. DEEPEN: Identify implications the first analysis missed
-    3. CHALLENGE: Find weaknesses, gaps, or alternative \
-    interpretations
-    4. SYNTHESIZE: Produce actionable recommendations that go \
-    beyond what Model 1 provided
-    5. CONNECT: Link findings to broader pharmacy industry \
-    trends and outreach strategy
-
-    Think step by step. Show your full reasoning process.
-
     === ORIGINAL QUESTION ===
     {question}
 
     === MODEL 1 OUTPUT (rmm-pharmacy-expert) ===
     {model1_output}
 
-    === YOUR ANALYSIS ===
-    Reason through this carefully. What did Model 1 get right? \
-    What did it miss? What should the outreach team actually do \
-    with this information?
+    === YOUR TASK ===
+    Apply your 5-step analysis framework. Check every number \
+    against your reference data. Flag anything fabricated. \
+    What should the outreach team actually do?
 """)
 
 
