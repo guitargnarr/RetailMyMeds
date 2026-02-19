@@ -1,50 +1,34 @@
 #!/usr/bin/env python3
 """
-Mirador Chain-of-Thought Pipeline
-===================================
-Model 1 (rmm-pharmacy-expert) --> Model 2 (rmm-chain-analyst)
+Mirador Pipeline
+=================
+Single model (rmm-pharmacy-expert) + Python fact validation.
 
-Emulates the Mirador framework: domain expert produces structured
-analysis, then a chain-of-thought reasoner synthesizes, challenges,
-and deepens the output. All runs cataloged to a .txt log file with
-full chain-of-thought traces.
+The model produces analysis grounded in real pharmacy data
+(when enriched via pharmacy_lookup). The fact validator then
+extracts every number, dollar amount, and percentage from the
+output and checks each against the CSV and reference constants.
 
 Usage:
   python3 mirador_chain.py "Your question here"
-  python3 mirador_chain.py --prompt "Your question" --log custom_log.txt
   python3 mirador_chain.py --interactive
+  python3 mirador_chain.py --npi 1497754923 "Question about this pharmacy"
 
-The log file captures every run with timestamps, model identifiers,
-full prompts, full responses (including <think> blocks from DeepSeek),
-and chain metadata.
+The log file captures every run with timestamps, model output,
+and fact validation results.
 """
 
 import argparse
 import subprocess
 import sys
-import textwrap
 from datetime import datetime
 from pathlib import Path
 
 
 # --- Configuration ---
 
-MODEL_1 = 'rmm-pharmacy-expert'
-MODEL_2 = 'rmm-chain-analyst'
+MODEL = 'rmm-pharmacy-expert'
 DEFAULT_LOG = Path(__file__).resolve().parent / 'mirador_chain_log.txt'
-
-CHAIN_PROMPT_TEMPLATE = textwrap.dedent("""\
-    === ORIGINAL QUESTION ===
-    {question}
-
-    === MODEL 1 OUTPUT (rmm-pharmacy-expert) ===
-    {model1_output}
-
-    === YOUR TASK ===
-    Apply your 5-step analysis framework. Check every number \
-    against your reference data. Flag anything fabricated. \
-    What should the outreach team actually do?
-""")
 
 
 # --- Ollama Runner ---
@@ -70,105 +54,126 @@ def log_run(
     log_path: Path,
     run_id: str,
     question: str,
-    m1_output: str,
-    m2_prompt: str,
-    m2_output: str,
-    elapsed_m1: float,
-    elapsed_m2: float,
+    model_output: str,
+    validation_summary: str,
+    elapsed_model: float,
+    elapsed_validation: float,
 ) -> None:
-    """Append a full chain run to the log file."""
+    """Append a run to the log file."""
     sep = '=' * 72
     with open(log_path, 'a', encoding='utf-8') as f:
         f.write(f"\n{sep}\n")
-        f.write(f"MIRADOR CHAIN RUN: {run_id}\n")
-        f.write(f"Timestamp: {datetime.now().isoformat()}\n")
-        f.write(f"Model 1: {MODEL_1}\n")
-        f.write(f"Model 2: {MODEL_2}\n")
-        f.write(f"M1 elapsed: {elapsed_m1:.1f}s\n")
-        f.write(f"M2 elapsed: {elapsed_m2:.1f}s\n")
-        f.write(f"Total elapsed: {elapsed_m1 + elapsed_m2:.1f}s\n")
+        f.write(f"MIRADOR RUN: {run_id}\n")
+        f.write(
+            f"Timestamp: {datetime.now().isoformat()}\n"
+        )
+        f.write(f"Model: {MODEL}\n")
+        f.write(f"Model elapsed: {elapsed_model:.1f}s\n")
+        f.write(
+            f"Validation elapsed: "
+            f"{elapsed_validation:.1f}s\n"
+        )
+        total = elapsed_model + elapsed_validation
+        f.write(f"Total elapsed: {total:.1f}s\n")
         f.write(f"{sep}\n\n")
 
         f.write("--- QUESTION ---\n")
         f.write(f"{question}\n\n")
 
-        f.write(f"--- MODEL 1 OUTPUT ({MODEL_1}) ---\n")
-        f.write(f"{m1_output}\n\n")
+        f.write(f"--- MODEL OUTPUT ({MODEL}) ---\n")
+        f.write(f"{model_output}\n\n")
 
-        f.write(f"--- MODEL 2 PROMPT (fed to {MODEL_2}) ---\n")
-        f.write(f"{m2_prompt}\n\n")
-
-        f.write(f"--- MODEL 2 OUTPUT ({MODEL_2}) ---\n")
-        f.write("(includes full chain-of-thought / <think> blocks)\n\n")
-        f.write(f"{m2_output}\n\n")
+        f.write("--- FACT VALIDATION ---\n")
+        f.write(f"{validation_summary}\n\n")
 
         f.write(f"{sep}\n")
         f.write("END OF RUN\n")
         f.write(f"{sep}\n\n")
 
 
-# --- Chain Execution ---
+# --- Pipeline Execution ---
 
-def run_chain(
+def run_pipeline(
     question: str,
     log_path: Path,
+    pharmacy: dict | None = None,
     verbose: bool = True,
 ) -> tuple[str, str]:
-    """Execute the full Mirador chain.
+    """Execute model + fact validation.
 
-    Returns (model1_output, model2_output).
+    Returns (model_output, validation_summary).
     """
+    from fact_validator import validate_output
+    from pharmacy_lookup import build_enriched_question
+
     run_id = datetime.now().strftime('%Y%m%d_%H%M%S')
+    enriched = build_enriched_question(question, pharmacy)
 
     if verbose:
         print(f"[Mirador] Run {run_id}")
         print(f"[Mirador] Question: {question[:80]}...")
-        print(f"[Mirador] Stage 1: {MODEL_1}...")
+        if pharmacy:
+            npi = pharmacy.get('npi', '?')
+            name = pharmacy.get('pharmacy_name', '?')
+            print(f"[Mirador] Pharmacy: {npi} ({name})")
+        print(f"[Mirador] Model: {MODEL}...")
 
     t0 = datetime.now()
-    m1_output = run_model(MODEL_1, question, timeout=300)
+    model_output = run_model(MODEL, enriched, timeout=300)
     t1 = datetime.now()
-    elapsed_m1 = (t1 - t0).total_seconds()
+    elapsed_model = (t1 - t0).total_seconds()
 
     if verbose:
-        print(f"[Mirador] Stage 1 complete ({elapsed_m1:.1f}s)")
-        print(f"[Mirador] Stage 2: {MODEL_2} (chain-of-thought)...")
-
-    m2_prompt = CHAIN_PROMPT_TEMPLATE.format(
-        question=question,
-        model1_output=m1_output,
-    )
+        print(
+            f"[Mirador] Model complete ({elapsed_model:.1f}s)"
+        )
+        print("[Mirador] Fact validation...")
 
     t2 = datetime.now()
-    m2_output = run_model(MODEL_2, m2_prompt, timeout=600)
+    result = validate_output(model_output, pharmacy)
     t3 = datetime.now()
-    elapsed_m2 = (t3 - t2).total_seconds()
+    elapsed_val = (t3 - t2).total_seconds()
 
     if verbose:
-        print(f"[Mirador] Stage 2 complete ({elapsed_m2:.1f}s)")
-        print(f"[Mirador] Total: {elapsed_m1 + elapsed_m2:.1f}s")
+        print(
+            f"[Mirador] Validation: {result.verified}/"
+            f"{len(result.claims)} verified, "
+            f"{result.flagged} flagged"
+        )
+        total = elapsed_model + elapsed_val
+        print(f"[Mirador] Total: {total:.1f}s")
 
     log_run(
-        log_path, run_id, question,
-        m1_output, m2_prompt, m2_output,
-        elapsed_m1, elapsed_m2,
+        log_path, run_id, enriched,
+        model_output, result.summary,
+        elapsed_model, elapsed_val,
     )
 
     if verbose:
         print(f"[Mirador] Logged to {log_path}")
 
-    return m1_output, m2_output
+    return model_output, result.summary
+
+
+# --- Backward compat for web server imports ---
+
+# Keep MODEL_1 alias so mirador_web.py imports still work
+MODEL_1 = MODEL
 
 
 # --- Main ---
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description='Mirador Chain-of-Thought Pipeline',
+        description='Mirador Pipeline',
     )
     parser.add_argument(
         'prompt', nargs='?', default=None,
-        help='Question to run through the chain',
+        help='Question to run through the pipeline',
+    )
+    parser.add_argument(
+        '--npi', default=None,
+        help='NPI to look up for pharmacy context',
     )
     parser.add_argument(
         '--log', default=str(DEFAULT_LOG),
@@ -184,14 +189,25 @@ def main() -> None:
     )
     args = parser.parse_args()
 
+    from pharmacy_lookup import lookup_npi
+
     log_path = Path(args.log)
     verbose = not args.quiet
+    pharmacy = None
+    if args.npi:
+        pharmacy = lookup_npi(args.npi)
+        if not pharmacy:
+            print(f"WARNING: NPI {args.npi} not found")
 
     if args.interactive:
-        print("Mirador Chain-of-Thought Pipeline")
-        print(f"  Model 1: {MODEL_1}")
-        print(f"  Model 2: {MODEL_2}")
+        print("Mirador Pipeline")
+        print(f"  Model: {MODEL}")
         print(f"  Log: {log_path}")
+        if pharmacy:
+            print(
+                f"  Pharmacy: {pharmacy.get('npi')} "
+                f"({pharmacy.get('pharmacy_name')})"
+            )
         print("Type 'quit' or 'exit' to stop.\n")
         while True:
             try:
@@ -203,33 +219,33 @@ def main() -> None:
                 continue
             if question.lower() in ('quit', 'exit', 'q'):
                 break
-            m1_out, m2_out = run_chain(
-                question, log_path, verbose,
+            m_out, v_out = run_pipeline(
+                question, log_path, pharmacy, verbose,
             )
-            print("\n--- MODEL 1 (Domain Expert) ---")
-            print(m1_out)
-            print("\n--- MODEL 2 (Chain-of-Thought Synthesis) ---")
-            print(m2_out)
+            print("\n--- MODEL OUTPUT ---")
+            print(m_out)
+            print("\n--- FACT VALIDATION ---")
+            print(v_out)
             print()
     elif args.prompt:
-        m1_out, m2_out = run_chain(
-            args.prompt, log_path, verbose,
+        m_out, v_out = run_pipeline(
+            args.prompt, log_path, pharmacy, verbose,
         )
-        print("\n--- MODEL 1 (Domain Expert) ---")
-        print(m1_out)
-        print("\n--- MODEL 2 (Chain-of-Thought Synthesis) ---")
-        print(m2_out)
+        print("\n--- MODEL OUTPUT ---")
+        print(m_out)
+        print("\n--- FACT VALIDATION ---")
+        print(v_out)
     else:
         if not sys.stdin.isatty():
             question = sys.stdin.read().strip()
             if question:
-                m1_out, m2_out = run_chain(
-                    question, log_path, verbose,
+                m_out, v_out = run_pipeline(
+                    question, log_path, pharmacy, verbose,
                 )
-                print("\n--- MODEL 1 (Domain Expert) ---")
-                print(m1_out)
-                print("\n--- MODEL 2 (Chain-of-Thought) ---")
-                print(m2_out)
+                print("\n--- MODEL OUTPUT ---")
+                print(m_out)
+                print("\n--- FACT VALIDATION ---")
+                print(v_out)
         else:
             parser.print_help()
 
