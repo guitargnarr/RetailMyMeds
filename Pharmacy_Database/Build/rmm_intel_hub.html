@@ -178,6 +178,24 @@
     color: rgba(255, 255, 255, 0.5);
   }
 
+  .logout-btn {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.4);
+    text-decoration: none;
+    padding: 4px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: var(--radius-sm);
+    letter-spacing: 0.5px;
+    transition: all 0.2s;
+    margin-left: 16px;
+    white-space: nowrap;
+  }
+  .logout-btn:hover {
+    color: rgba(255, 255, 255, 0.7);
+    border-color: rgba(255, 255, 255, 0.3);
+  }
+
   .header-stats .stat-val {
     color: rgba(255, 255, 255, 0.85);
     font-weight: 600;
@@ -1068,6 +1086,7 @@
     <div class="header-badge" id="headerBadge">--</div>
   </div>
   <div class="header-stats" id="headerStats"></div>
+  <a href="/logout" class="logout-btn" title="Sign Out">Sign Out</a>
 </header>
 
 <main class="container">
