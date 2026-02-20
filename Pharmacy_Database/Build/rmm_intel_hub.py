@@ -36,7 +36,7 @@ from pharmacy_lookup import (
 )
 
 app = Flask(__name__)
-app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-prod')
+app.secret_key = os.environ['SECRET_KEY']
 app.config['PERMANENT_SESSION_LIFETIME'] = 86400  # 24 hours
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
@@ -45,8 +45,8 @@ app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 if os.environ.get('SESSION_COOKIE_SECURE', '').lower() == 'true':
     app.config['SESSION_COOKIE_SECURE'] = True
 
-INTEL_USER = os.environ.get('INTEL_HUB_USER', 'rmm')
-INTEL_PASS = os.environ.get('INTEL_HUB_PASS', 'intel2026')
+INTEL_USER = os.environ['INTEL_HUB_USER']
+INTEL_PASS = os.environ['INTEL_HUB_PASS']
 
 # Brute-force protection: track failed attempts by IP
 _failed_attempts: dict[str, list[float]] = {}
