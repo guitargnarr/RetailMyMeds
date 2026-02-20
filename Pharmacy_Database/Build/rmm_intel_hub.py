@@ -13,10 +13,16 @@ Kevin and Arica open http://localhost:5199 and use it.
 """
 
 import csv
+import hmac
 import io
+import os
+import time
+from functools import wraps
 from pathlib import Path
 
-from flask import Flask, Response, jsonify, request, send_file
+from flask import (
+    Flask, Response, jsonify, redirect, request, send_file, session, url_for,
+)
 
 from pharmacy_intel import (
     GRADE_COUNTS,
@@ -30,8 +36,138 @@ from pharmacy_lookup import (
 )
 
 app = Flask(__name__)
+app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-prod')
+app.config['PERMANENT_SESSION_LIFETIME'] = 86400  # 24 hours
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+
+# In production (Render), set SESSION_COOKIE_SECURE=true via env
+if os.environ.get('SESSION_COOKIE_SECURE', '').lower() == 'true':
+    app.config['SESSION_COOKIE_SECURE'] = True
+
+INTEL_USER = os.environ.get('INTEL_HUB_USER', 'rmm')
+INTEL_PASS = os.environ.get('INTEL_HUB_PASS', 'intel2026')
+
+# Brute-force protection: track failed attempts by IP
+_failed_attempts: dict[str, list[float]] = {}
+_MAX_ATTEMPTS = 5
+_LOCKOUT_SECONDS = 300  # 5 minutes
 
 UI_PATH = Path(__file__).resolve().parent / 'rmm_intel_hub.html'
+
+
+def login_required(f):
+    """Redirect to login if not authenticated."""
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not session.get('authenticated'):
+            if request.path.startswith('/api/'):
+                return jsonify({'error': 'Authentication required'}), 401
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated
+
+
+LOGIN_HTML = """<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RMM Intelligence Hub - Login</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #1A0A2E;
+    color: #EEEAE4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+  }
+  .login-box {
+    background: rgba(17, 7, 32, 0.85);
+    border: 1px solid rgba(212, 168, 83, 0.3);
+    border-radius: 6px;
+    padding: 48px 40px;
+    width: 360px;
+    text-align: center;
+  }
+  .login-box h1 {
+    font-size: 13px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: rgba(74, 111, 165, 0.7);
+    margin-bottom: 12px;
+  }
+  .login-box h2 {
+    font-size: 26px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 8px;
+  }
+  .login-box .subtitle {
+    font-size: 13px;
+    color: rgba(74, 111, 165, 0.6);
+    margin-bottom: 32px;
+  }
+  .login-box .divider {
+    width: 80px;
+    height: 1px;
+    background: #D4A853;
+    margin: 0 auto 28px;
+  }
+  input {
+    width: 100%;
+    padding: 12px 16px;
+    margin-bottom: 14px;
+    background: rgba(26, 10, 46, 0.8);
+    border: 1px solid rgba(212, 168, 83, 0.25);
+    border-radius: 4px;
+    color: #EEEAE4;
+    font-size: 14px;
+    outline: none;
+  }
+  input:focus { border-color: #D4A853; }
+  input::placeholder { color: rgba(221, 216, 206, 0.35); }
+  button {
+    width: 100%;
+    padding: 12px;
+    background: rgba(212, 168, 83, 0.2);
+    border: 1px solid rgba(212, 168, 83, 0.5);
+    border-radius: 4px;
+    color: #D4A853;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    margin-top: 6px;
+  }
+  button:hover { background: rgba(212, 168, 83, 0.3); }
+  .error {
+    color: #e87c7c;
+    font-size: 13px;
+    margin-bottom: 16px;
+  }
+</style>
+</head>
+<body>
+<div class="login-box">
+  <h1>RetailMyMeds</h1>
+  <h2>Intelligence Hub</h2>
+  <div class="divider"></div>
+  <p class="subtitle">Authorized access only</p>
+  <!-- ERROR_PLACEHOLDER -->
+  <form method="POST">
+    <input type="text" name="username" placeholder="Username" autocomplete="username" required>
+    <input type="password" name="password" placeholder="Password"
+      autocomplete="current-password" required>
+    <button type="submit">Sign In</button>
+  </form>
+</div>
+</body>
+</html>"""
 
 
 # --- Precompute state summary data ---
@@ -58,16 +194,73 @@ def _build_state_summaries() -> None:
 _build_state_summaries()
 
 
+# --- Auth Routes ---
+
+
+def _is_locked_out(ip: str) -> bool:
+    """Check if an IP is locked out from too many failed attempts."""
+    now = time.time()
+    attempts = _failed_attempts.get(ip, [])
+    # Prune old attempts
+    attempts = [t for t in attempts if now - t < _LOCKOUT_SECONDS]
+    _failed_attempts[ip] = attempts
+    return len(attempts) >= _MAX_ATTEMPTS
+
+
+def _record_failure(ip: str) -> None:
+    """Record a failed login attempt."""
+    _failed_attempts.setdefault(ip, []).append(time.time())
+
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    """Login page."""
+    if session.get('authenticated'):
+        return redirect(url_for('index'))
+
+    error = ''
+    client_ip = request.remote_addr or '0.0.0.0'
+
+    if request.method == 'POST':
+        if _is_locked_out(client_ip):
+            error = '<p class="error">Too many attempts. Try again in 5 minutes.</p>'
+        else:
+            username = request.form.get('username', '')
+            password = request.form.get('password', '')
+            user_ok = hmac.compare_digest(username, INTEL_USER)
+            pass_ok = hmac.compare_digest(password, INTEL_PASS)
+            if user_ok and pass_ok:
+                session.permanent = True
+                session['authenticated'] = True
+                session['login_time'] = time.time()
+                # Clear failed attempts on success
+                _failed_attempts.pop(client_ip, None)
+                return redirect(url_for('index'))
+            _record_failure(client_ip)
+            error = '<p class="error">Invalid credentials</p>'
+
+    return LOGIN_HTML.replace('<!-- ERROR_PLACEHOLDER -->', error)
+
+
+@app.route('/logout')
+def logout():
+    """Clear session and redirect to login."""
+    session.clear()
+    return redirect(url_for('login'))
+
+
 # --- Routes ---
 
 
 @app.route('/')
+@login_required
 def index():
     """Serve the UI."""
     return send_file(UI_PATH)
 
 
 @app.route('/api/search')
+@login_required
 def api_search():
     """Search pharmacies by NPI or name."""
     q = request.args.get('q', '').strip()
@@ -79,6 +272,7 @@ def api_search():
 
 
 @app.route('/api/report/<npi>')
+@login_required
 def api_report(npi):
     """Generate full intel report for a pharmacy."""
     from pharmacy_lookup import lookup_npi
@@ -96,6 +290,7 @@ def api_report(npi):
 
 
 @app.route('/api/state/<state>')
+@login_required
 def api_state(state):
     """State summary with optional grade filter."""
     grade = request.args.get('grade', '').upper() or None
@@ -127,6 +322,7 @@ def api_state(state):
 
 
 @app.route('/api/state/<state>/export')
+@login_required
 def api_state_export(state):
     """Export all matching pharmacies as downloadable CSV."""
     grade = request.args.get('grade', '').upper() or None
@@ -177,6 +373,7 @@ def api_state_export(state):
 
 
 @app.route('/api/states')
+@login_required
 def api_states():
     """Return all state summaries for the overview."""
     states = sorted(
