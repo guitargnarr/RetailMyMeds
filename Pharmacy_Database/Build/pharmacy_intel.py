@@ -195,6 +195,18 @@ def _outreach_talking_points(pharmacy: dict) -> str:
             f"community-dependent pharmacy."
         )
 
+    # MFP exposure
+    points.append(
+        "MFP program active since Jan 2026. "
+        "10 drugs in Cycle 1; 10 more coming Jan 2027 "
+        "(scaling to 50-60 total). "
+        "Reimbursement lag: ~60 days vs. normal 2 weeks. "
+        "Manufacturer rebates not being paid correctly -- "
+        "pharmacies are not being made whole. "
+        "Cash flow was already the #1 issue; "
+        "MFP pours salt in the wound."
+    )
+
     # Income
     income = pharmacy.get('zip_median_income', '')
     if income and income != 'N/A':
@@ -222,7 +234,10 @@ def _limitations() -> str:
         "  - HPSA designation is area-level, not "
         "pharmacy-specific\n"
         "  - We do not know which pharmacies are "
-        "existing RMM customers"
+        "existing RMM customers\n"
+        "  - MFP data is program-level, not "
+        "pharmacy-specific. Actual rebate shortfalls "
+        "vary by drug and manufacturer"
     )
 
 
