@@ -26,14 +26,14 @@ CRITICAL: When the domain expert cites a specific number, CHECK IT against the r
 - NCPA reports ~18,984 independents; our 33,185 = 1.75x (definitional gap)
 
 ### Grade Distribution
-- A: 4,978 (15.0%) -- Immediate -- threshold score: 70.4
+- A: 4,978 (15.0%) -- Immediate -- threshold score: 72.0
 - B: 8,296 (25.0%) -- High
 - C: 9,956 (30.0%) -- Standard
 - D: 9,955 (30.0%) -- Monitor
-- Score range: 13.2 to 98.3
+- Score range: 7.0 to 98.7
 
 ### Scoring Weights
-- 25% State GLP-1 cost per pharmacy (normal, CMS Part D)
+- 25% GLP-1 Exposure Index (normal, CMS Part D Prescribers + proximity weighting)
 - 20% ZIP diabetes prevalence (normal, CDC/Census)
 - 15% ZIP % age 65+ (normal, Census)
 - 10% ZIP obesity prevalence (normal, CDC/Census)
@@ -46,15 +46,14 @@ Inverted: (1 - rank) * 100. Nulls fill 50.0.
 Grades: round(n * threshold) cumulative cutoffs.
 
 ### State Data (Total | Grade A)
-OH: 779 | 461, LA: 719 | 359, NC: 910 | 340
-TN: 714 | 309, AL: 736 | 260, IL: 930 | 251
-GA: 993 | 249, WV: -- | 246, VA: -- | 240
-CA: 3,037 | 225, MI: 1,698 | 223, SC: -- | 217
-MO: 703 | 208, IN: -- | 164, TX: 3,108 | 156
-OK: 617 | 143, WI: -- | 141, MN: -- | 74
-IA: -- | 74, MS: 523 | 73, KY: 696 | 11
-NY: 3,894 | --, FL: 2,677 | --, PA: 1,399 | --
-NJ: 1,284 | --, MD: 548 | --
+FL: 2,677 | 583, TX: 3,108 | 481, MI: 1,698 | 382
+LA: 719 | 367, OH: 779 | 329, AL: 736 | 258
+TN: 714 | 246, NC: 910 | 239, WV: 291 | 225
+VA: 511 | 178, SC: 439 | 176, GA: 993 | 162
+CA: 3,037 | 159, NY: 3,894 | 150, IL: 930 | 148
+MO: 703 | 133, OK: 617 | 106, MS: 523 | 99
+IN: 299 | 74, AR: 523 | 61, KY: 696 | 11
+PA: 1,399 | 0, NJ: 1,284 | --, MD: 548 | 55
 
 ### RUCC Classification
 Metro (RUCC 1-3): 26,480 (79.8%)
@@ -81,7 +80,7 @@ Grade A rural breakdown: Metro 2,296 (46.1%), Rural-Adjacent 1,774 (35.6%), Rura
 ### Arica's Pharmacy
 NPI: 1497754923, Central Kentucky Apothecary (DBA Dyer Drug)
 Albany, KY 42602, Clinton County, FIPS 21053, RUCC 9 (Rural-Remote)
-Score: 86.3, Grade A. KY total: 696, KY Grade A: 11.
+Score: 82.8, Grade A. KY total: 696, KY Grade A: 11.
 
 ### RMM Business
 $275/month SaaS ($225 for 5+ stores). Identifies net-negative scripts, coordinates mail-order transfer. Founded 2021 by Dr. Arica Collins, PharmD. Kevin McCarron handles dev/marketing via ThatWasEZ.

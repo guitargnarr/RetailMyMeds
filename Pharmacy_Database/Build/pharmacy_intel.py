@@ -323,7 +323,7 @@ def generate_report(pharmacy: dict) -> str:
         f"({pharmacy.get('outreach_priority', '')})"
     )
     sections.append(
-        f"Grade A threshold: 70.4 "
+        f"Grade A threshold: 72.0 "
         f"(top {GRADE_COUNTS['A']:,} of "
         f"{TOTAL_PHARMACIES:,})"
     )

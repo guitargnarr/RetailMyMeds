@@ -48,8 +48,8 @@ Original: 39,611 verified pharmacies (after excluding mail-order)
 | 4 | Remove chains | ~89 | ~33,368 |
 | 5 | Remove non-pharmacy clinics | ~183 | ~33,185 |
 
-### 24 Output Columns
-npi, pharmacy_name, owner_name, city, state, zip, phone, grade, outreach_priority, rmm_score, est_monthly_glp1_fills, est_annual_glp1_loss, hpsa_designated, hpsa_score, zip_diabetes_pct, zip_obesity_pct, zip_pct_65_plus, zip_median_income, zip_population, state_glp1_cost_per_pharmacy, county_fips, county_name, rucc_code, rural_classification
+### 27 Output Columns
+npi, pharmacy_name, owner_name, city, state, zip, phone, grade, outreach_priority, rmm_score, glp1_exposure_index, nearby_glp1_prescriber_claims, est_monthly_glp1_fills, est_loss_per_fill, est_annual_glp1_loss, hpsa_designated, hpsa_score, zip_diabetes_pct, zip_obesity_pct, zip_pct_65_plus, zip_median_income, zip_population, state_glp1_cost_per_pharmacy, county_fips, county_name, rucc_code, rural_classification
 
 ---
 
@@ -59,7 +59,7 @@ npi, pharmacy_name, owner_name, city, state, zip, phone, grade, outreach_priorit
 
 | Factor | Weight | Direction | Source |
 |--------|--------|-----------|--------|
-| State GLP-1 cost per pharmacy | 25% | Normal | CMS Part D |
+| GLP-1 Exposure Index | 25% | Normal | CMS Part D Prescribers + proximity |
 | ZIP diabetes prevalence | 20% | Normal | CDC/Census |
 | ZIP % age 65+ | 15% | Normal | Census |
 | ZIP obesity prevalence | 10% | Normal | CDC/Census |
@@ -69,7 +69,7 @@ npi, pharmacy_name, owner_name, city, state, zip, phone, grade, outreach_priorit
 
 **Method:** pandas .rank(pct=True, method='max') * 100. Inverted: (1 - rank) * 100. Nulls filled with 50.0. Score = sum(weight * rank), rounded to 1 decimal.
 
-**Score range:** 13.2 to 98.3
+**Score range:** 7.0 to 98.7
 
 ### Grade Assignment
 | Grade | Cutoff | Priority | Count |
@@ -79,7 +79,7 @@ npi, pharmacy_name, owner_name, city, state, zip, phone, grade, outreach_priorit
 | C | Next 30% | Standard | 9,956 |
 | D | Remainder | Monitor | 9,955 |
 
-Grade A threshold score: 70.4
+Grade A threshold score: 72.0
 
 ### GLP-1 Estimates
 - Monthly fills = exposure-weighted from state totals (pharmacy-differentiated by prescriber proximity)
@@ -107,18 +107,18 @@ Grade A threshold score: 70.4
 
 | State | Total | Grade A | State | Total | Grade A |
 |-------|-------|---------|-------|-------|---------|
-| NY | 3,894 | -- | OH | 779 | 461 |
-| TX | 3,108 | 156 | AL | 736 | 260 |
-| CA | 3,037 | 225 | LA | 719 | 359 |
-| FL | 2,677 | -- | TN | 714 | 309 |
-| MI | 1,698 | 223 | MO | 703 | 208 |
-| PA | 1,399 | -- | KY | 696 | 11 |
-| NJ | 1,284 | -- | OK | 617 | 143 |
-| GA | 993 | 249 | MS | 523 | 73 |
-| IL | 930 | 251 | WV | -- | 246 |
-| NC | 910 | 340 | VA | -- | 240 |
+| FL | 2,677 | 583 | TX | 3,108 | 481 |
+| MI | 1,698 | 382 | LA | 719 | 367 |
+| OH | 779 | 329 | AL | 736 | 258 |
+| TN | 714 | 246 | NC | 910 | 239 |
+| WV | 291 | 225 | VA | 511 | 178 |
+| SC | 439 | 176 | GA | 993 | 162 |
+| CA | 3,037 | 159 | NY | 3,894 | 150 |
+| IL | 930 | 148 | MO | 703 | 133 |
+| OK | 617 | 106 | MS | 523 | 99 |
+| KY | 696 | 11 | PA | 1,399 | 0 |
 
-Ohio leads Grade A (461) despite ranking 11th total -- high diabetes, high GLP-1 spending, high HPSA rate.
+Florida leads Grade A (583) due to high GLP-1 exposure, senior population, and HPSA coverage. WV has highest concentration (77.3%).
 
 ### HPSA Coverage
 30,387 / 33,185 = 91.6% in federally designated shortage areas.
@@ -160,7 +160,7 @@ Metro: 2,296 (46.1%), Rural-Adjacent: 1,774 (35.6%), Rural-Remote: 866 (17.4%). 
 | City | Albany, KY 42602 |
 | County | Clinton County (FIPS 21053) |
 | RUCC | 9 (Rural-Remote) |
-| Score | 86.3, Grade A (Immediate) |
+| Score | 82.8, Grade A (Immediate) |
 | KY totals | 696 pharmacies, 11 Grade A |
 
 ---
