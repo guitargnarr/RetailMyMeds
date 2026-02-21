@@ -20,6 +20,8 @@ import time
 from functools import wraps
 from pathlib import Path
 
+import requests as http_client
+
 from flask import (
     Flask, Response, jsonify, redirect, request, send_file, session, url_for,
 )
@@ -47,6 +49,11 @@ if os.environ.get('SESSION_COOKIE_SECURE', '').lower() == 'true':
 
 INTEL_USER = os.environ['INTEL_HUB_USER']
 INTEL_PASS = os.environ['INTEL_HUB_PASS']
+
+# Texume API for scorecard generation
+TEXUME_API_URL = os.environ.get(
+    'TEXUME_API_URL', 'https://texume-api.onrender.com',
+)
 
 # Brute-force protection: track failed attempts by IP
 _failed_attempts: dict[str, list[float]] = {}
@@ -396,6 +403,160 @@ def api_health():
         'pharmacies': TOTAL_PHARMACIES,
         'states': len(_STATE_SUMMARY),
     })
+
+
+# --- Scorecard Proxy (Intel Hub -> Texume API) ---
+
+
+def _volume_dropdown(vol: float) -> str:
+    """Map estimated Rx volume to ScorecardRequest dropdown."""
+    if vol < 2000:
+        return "Under 2,000"
+    elif vol < 4000:
+        return "2,000-3,999"
+    elif vol < 6000:
+        return "4,000-5,999"
+    elif vol < 8000:
+        return "6,000-7,999"
+    return "8,000+"
+
+
+def _glp1_dropdown(fills: float) -> str:
+    """Map GLP-1 monthly fills to ScorecardRequest dropdown."""
+    if fills < 100:
+        return "Under 100"
+    elif fills < 200:
+        return "100-200"
+    elif fills < 350:
+        return "200-350"
+    elif fills < 500:
+        return "350-500"
+    return "500+"
+
+
+def _gov_payer_dropdown(pct: float) -> str:
+    """Map gov payer % estimate to ScorecardRequest dropdown."""
+    if pct < 20:
+        return "Under 20%"
+    elif pct < 40:
+        return "20-40%"
+    elif pct < 60:
+        return "40-60%"
+    elif pct < 80:
+        return "60-80%"
+    return "Over 80%"
+
+
+def _build_scorecard_payload(pharmacy: dict) -> dict:
+    """Map CSV pharmacy data to ScorecardRequest fields."""
+    fills = _safe_float(
+        pharmacy.get('est_monthly_glp1_fills', 0),
+    )
+    est_volume = fills / 0.07 if fills > 0 else 5000
+    pct_65 = _safe_float(
+        pharmacy.get('zip_pct_65_plus', 0),
+    )
+    gov_est = min(pct_65 * 2.5, 95)
+
+    return {
+        'pharmacy_name': pharmacy.get('pharmacy_name', ''),
+        'owner_name': pharmacy.get('owner_name', ''),
+        'city': pharmacy.get('city', ''),
+        'state': pharmacy.get('state', ''),
+        'monthly_rx_volume': _volume_dropdown(est_volume),
+        'glp1_monthly_fills': _glp1_dropdown(fills),
+        'gov_payer_pct': _gov_payer_dropdown(gov_est),
+        'pms_system': 'Other',
+        'num_technicians': '2',
+        'aware_of_underwater_rx': "I'm not sure",
+        'lost_patients_to_mail_order': 'No',
+        'dir_fee_pressure': 'Significant squeeze',
+        'dispenses_mfp_drugs': "I'm not sure",
+    }
+
+
+@app.route('/api/scorecard/<npi>', methods=['POST'])
+@login_required
+def api_scorecard(npi):
+    """Generate a scorecard for a pharmacy via Texume API."""
+    from pharmacy_lookup import lookup_npi
+    pharmacy = lookup_npi(npi)
+    if not pharmacy:
+        return jsonify({'error': 'NPI not found'}), 404
+
+    payload = _build_scorecard_payload(pharmacy)
+
+    try:
+        resp = http_client.post(
+            f'{TEXUME_API_URL}/scorecard',
+            json=payload,
+            timeout=90,
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        data.pop('pdf_base64', None)
+        return jsonify(data)
+    except http_client.exceptions.Timeout:
+        return jsonify({
+            'error': (
+                'Scorecard generation timed out. '
+                'The API may be warming up. '
+                'Try again in 30 seconds.'
+            ),
+        }), 504
+    except http_client.exceptions.ConnectionError:
+        return jsonify({
+            'error': (
+                'Could not reach the scorecard service. '
+                'It may be starting up.'
+            ),
+        }), 502
+    except http_client.exceptions.HTTPError as e:
+        return jsonify({
+            'error': f'Scorecard service error: {e.response.status_code}',
+        }), 502
+
+
+@app.route('/api/scorecard/<npi>/pdf')
+@login_required
+def api_scorecard_pdf(npi):
+    """Download scorecard PDF for a pharmacy."""
+    from pharmacy_lookup import lookup_npi
+    pharmacy = lookup_npi(npi)
+    if not pharmacy:
+        return jsonify({'error': 'NPI not found'}), 404
+
+    payload = _build_scorecard_payload(pharmacy)
+    name = pharmacy.get('pharmacy_name', 'pharmacy')
+    slug = name.lower().replace(' ', '_')[:30]
+
+    try:
+        resp = http_client.post(
+            f'{TEXUME_API_URL}/scorecard/pdf',
+            json=payload,
+            timeout=90,
+        )
+        resp.raise_for_status()
+        return Response(
+            resp.content,
+            mimetype='application/pdf',
+            headers={
+                'Content-Disposition': (
+                    f'attachment; filename="scorecard_{slug}.pdf"'
+                ),
+            },
+        )
+    except http_client.exceptions.Timeout:
+        return jsonify({
+            'error': 'PDF generation timed out. Try again.',
+        }), 504
+    except (
+        http_client.exceptions.ConnectionError,
+        http_client.exceptions.HTTPError,
+    ):
+        return jsonify({
+            'error': 'Could not generate PDF. Try again.',
+        }), 502
 
 
 # --- Formatters ---

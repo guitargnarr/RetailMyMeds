@@ -578,6 +578,23 @@
   }
   .action-btn:hover { background: var(--surface-alt); border-color: var(--teal); color: var(--teal-dark); }
   .action-btn.copied { border-color: var(--grade-a); color: var(--grade-a); }
+  .action-btn-scorecard {
+    background: var(--teal); border-color: var(--teal-dark); color: #fff; font-weight: 600;
+  }
+  .action-btn-scorecard:hover { background: var(--teal-dark); border-color: var(--teal-dark); color: #fff; }
+  .action-btn-scorecard:disabled { opacity: 0.5; cursor: not-allowed; }
+  .spinner { display:inline-block; width:14px; height:14px; border:2px solid rgba(255,255,255,0.3); border-top-color:#fff; border-radius:50%; animation:spin .6s linear infinite; vertical-align:middle; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+
+  .scorecard-section { margin-bottom: 20px; }
+  .scorecard-section .section-label { font-size:12px; font-weight:600; letter-spacing:2px; text-transform:uppercase; color:var(--teal); margin-bottom:12px; }
+  .scorecard-big-score { font-family:var(--font-mono); font-size:48px; font-weight:700; color:var(--teal-dark); }
+  .scorecard-sub-row { display:flex; justify-content:space-between; padding:10px 18px; border-bottom:1px solid var(--border); font-size:13px; }
+  .scorecard-sub-row:last-child { border-bottom:none; }
+  .scorecard-sub-key { color:var(--text-secondary); }
+  .scorecard-sub-val { font-family:var(--font-mono); font-weight:600; color:var(--text-primary); }
+  .scorecard-download { display:inline-flex; align-items:center; gap:6px; padding:8px 18px; background:var(--teal); border:none; border-radius:var(--radius-sm); color:#fff; font-size:13px; font-weight:600; cursor:pointer; text-decoration:none; transition:background .15s; }
+  .scorecard-download:hover { background:var(--teal-dark); color:#fff; }
 
   /* Report hero */
   .report-hero {
@@ -1202,6 +1219,10 @@
           <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 6V1h8v5"/><rect x="2" y="6" width="12" height="6" rx="1"/><path d="M4 12v3h8v-3"/></svg>
           Print
         </button>
+        <button class="action-btn action-btn-scorecard" id="scorecardBtn">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12l4-8 3 4 2-2 3 6"/><rect x="1" y="1" width="14" height="14" rx="2"/></svg>
+          Generate Scorecard
+        </button>
       </div>
     </div>
 
@@ -1209,6 +1230,11 @@
     <div class="tp-section animate-in animate-in-2" id="talkingPoints"></div>
     <div class="data-grid animate-in animate-in-3" id="dataGrid"></div>
     <div class="context-section animate-in animate-in-4" id="stateContext"></div>
+
+    <div class="scorecard-section animate-in animate-in-5" id="scorecardSection" style="display:none">
+      <div class="section-label">Qualification Scorecard</div>
+      <div id="scorecardResults"></div>
+    </div>
 
     <div class="limitations-card animate-in animate-in-5">
       <div class="limitations-title">Limitations</div>
@@ -1467,6 +1493,10 @@ async function loadReport(npi) {
       row.addEventListener('click', () => loadReport(row.dataset.npi));
     });
 
+    // Wire scorecard button + reset on new report
+    $('scorecardSection').style.display = 'none';
+    $('scorecardBtn').onclick = () => generateScorecard(npi);
+
     window.scrollTo({ top: 0, behavior: 'smooth' });
   } finally { showLoading(false); }
 }
@@ -1613,6 +1643,94 @@ $('printBtn').addEventListener('click', () => {
   w.document.close();
   w.print();
 });
+
+// --- Scorecard generation ---
+
+let currentScorecardNpi = '';
+
+async function generateScorecard(npi) {
+  const btn = $('scorecardBtn');
+  const origHTML = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Generating...';
+
+  try {
+    const resp = await fetch('/api/scorecard/' + npi, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({}),
+    });
+    if (!resp.ok) {
+      const err = await resp.json();
+      throw new Error(err.error || 'Scorecard generation failed');
+    }
+    const data = await resp.json();
+    currentScorecardNpi = npi;
+    renderScorecard(data, npi);
+  } catch (e) {
+    alert('Scorecard error: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = origHTML;
+  }
+}
+
+function renderScorecard(data, npi) {
+  const section = $('scorecardSection');
+  section.style.display = '';
+  $('scorecardResults').innerHTML = `
+    <div class="data-grid">
+      <div class="data-card">
+        <div class="data-card-header">Overall Qualification</div>
+        <div style="text-align:center;padding:24px 16px 16px">
+          <div class="scorecard-big-score">${data.overall_score}</div>
+          <div style="margin-top:8px">
+            <span class="grade-badge grade-badge-lg grade-${data.overall_grade}">${data.overall_grade} &middot; ${esc(data.overall_label)}</span>
+          </div>
+        </div>
+        <div class="scorecard-sub-row">
+          <span class="scorecard-sub-key">Breakeven Fills</span>
+          <span class="scorecard-sub-val" style="color:var(--teal)">${data.roi_breakeven_fills}/mo</span>
+        </div>
+      </div>
+      <div class="data-card">
+        <div class="data-card-header">Sub-Scores</div>
+        <div class="scorecard-sub-row">
+          <span class="scorecard-sub-key">Financial Fit (45%)</span>
+          <span class="scorecard-sub-val">${data.financial_fit_score}/100</span>
+        </div>
+        <div class="scorecard-sub-row">
+          <span class="scorecard-sub-key">Operational Readiness (30%)</span>
+          <span class="scorecard-sub-val">${data.operational_readiness_score}/100</span>
+        </div>
+        <div class="scorecard-sub-row">
+          <span class="scorecard-sub-key">Market Urgency (25%)</span>
+          <span class="scorecard-sub-val">${data.market_urgency_score}/100</span>
+        </div>
+      </div>
+    </div>
+    <div class="tp-card" style="margin:14px 0">
+      <div class="tp-card-header"><span class="dot"></span>Recommendation</div>
+      <div style="padding:16px 18px;line-height:1.7;color:var(--text-secondary);font-size:13px">${esc(data.recommendation)}</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px">
+      <a class="scorecard-download" href="/api/scorecard/${npi}/pdf" target="_blank">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v9m-4-4l4 4 4-4"/><rect x="2" y="12" width="12" height="2" rx="1"/></svg>
+        Download PDF
+      </a>
+    </div>
+    <div class="limitations-card">
+      <div class="limitations-title">Scorecard Assumptions</div>
+      <ul>
+        <li>Monthly Rx volume estimated from GLP-1 fills (fills / 7% penetration rate)</li>
+        <li>Government payer mix estimated from ZIP age 65+ percentage</li>
+        <li>PMS system, technician count, and situational factors use industry defaults</li>
+        <li>For a precise scorecard, the pharmacy fills out the full qualification form</li>
+      </ul>
+    </div>
+  `;
+  section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
 
 function esc(s) { if (!s) return ''; const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 function fmtDollar(val) { if (!val || val === 'N/A') return 'N/A'; const n = Number(val); if (isNaN(n)) return val; return '$' + Math.round(n).toLocaleString(); }
