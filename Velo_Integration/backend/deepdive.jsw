@@ -1,0 +1,179 @@
+/**
+ * RetailMyMeds Deep-Dive Evaluation - Wix Backend Module
+ *
+ * This file goes in: Backend & Public > backend > deepdive.jsw
+ *
+ * Wix Velo .jsw files run server-side (Node.js) and are callable
+ * from page code via import. This keeps the API URL hidden from
+ * the browser and handles error cases server-side.
+ *
+ * API: https://texume-api.onrender.com/deepdive
+ * Contract: DeepDiveRequest -> DeepDiveResponse (see api.py)
+ */
+
+import { fetch } from 'wix-fetch';
+
+const API_URL = 'https://texume-api.onrender.com/deepdive';
+
+// Deep-dive PDFs are larger (6-8 pages) -- allow more time
+const TIMEOUT_MS = 90000;
+
+/**
+ * Submit pharmacy dispensing data to the deep-dive API.
+ *
+ * @param {Object} formData - Collected from the deep-dive form
+ * @param {string} formData.pharmacyName
+ * @param {string} formData.ownerName
+ * @param {string} [formData.city]
+ * @param {string} [formData.state]
+ * @param {string} [formData.email]
+ * @param {string} [formData.phone]
+ * @param {string} [formData.npiNumber]
+ * @param {string} [formData.pmsSystem]
+ * @param {Array}  formData.glp1Drugs - Array of GLP-1 drug objects
+ * @param {Array}  [formData.mfpDrugs] - Array of MFP drug objects
+ * @param {number} [formData.specialtyMonthlyLoss]
+ * @param {number} [formData.genericBelowNadacPct]
+ * @param {number} [formData.monthlyRxVolume]
+ * @param {string} [formData.identifyMethod]
+ * @param {string} [formData.routingAction]
+ * @returns {Object} Deep-dive result with analysis and PDF
+ */
+export async function generateDeepdive(formData) {
+    // Map form data to DeepDiveRequest schema
+    const payload = {
+        pharmacy_name: formData.pharmacyName,
+        owner_name: formData.ownerName,
+        city: formData.city || '',
+        state: formData.state || '',
+        email: formData.email || null,
+        phone: formData.phone || null,
+        npi_number: formData.npiNumber || null,
+        pms_system: formData.pmsSystem || '',
+
+        // GLP-1 drugs: map camelCase to snake_case
+        glp1_drugs: (formData.glp1Drugs || []).map(drug => ({
+            drug_name: drug.drugName,
+            fills_per_month: Number(drug.fillsPerMonth),
+            acquisition_cost: Number(drug.acquisitionCost),
+            avg_reimbursement: Number(drug.avgReimbursement),
+            payer_type: drug.payerType || 'Commercial PBM',
+        })),
+
+        // MFP drugs (optional)
+        mfp_drugs: (formData.mfpDrugs || []).map(drug => ({
+            drug_name: drug.drugName,
+            fills_per_month: Number(drug.fillsPerMonth),
+            acquisition_cost: Number(drug.acquisitionCost),
+            pbm_reimbursement: Number(drug.pbmReimbursement),
+            expected_rebate: Number(drug.expectedRebate),
+            actual_rebate_received: drug.actualRebateReceived != null
+                ? Number(drug.actualRebateReceived) : null,
+            days_outstanding: Number(drug.daysOutstanding) || 60,
+        })),
+
+        // Aggregate (optional)
+        specialty_monthly_loss: Number(formData.specialtyMonthlyLoss) || 0,
+        generic_below_nadac_pct: Number(formData.genericBelowNadacPct) || 0,
+        monthly_rx_volume: Number(formData.monthlyRxVolume) || 0,
+
+        // Workflow
+        how_identify_underwater_now: formData.identifyMethod || "We don't",
+        current_routing_action: formData.routingAction || "We don't route",
+    };
+
+    // Validate: must have pharmacy name, owner, and at least 1 GLP-1 drug
+    if (!payload.pharmacy_name) {
+        return { success: false, error: 'Pharmacy name is required.' };
+    }
+    if (!payload.owner_name) {
+        return { success: false, error: 'Owner name is required.' };
+    }
+    if (!payload.glp1_drugs || payload.glp1_drugs.length === 0) {
+        return { success: false, error: 'At least one GLP-1 drug entry is required.' };
+    }
+
+    // Validate each GLP-1 drug has required numeric fields
+    for (let i = 0; i < payload.glp1_drugs.length; i++) {
+        const drug = payload.glp1_drugs[i];
+        if (!drug.drug_name) {
+            return { success: false, error: `GLP-1 drug ${i + 1}: drug name is required.` };
+        }
+        if (!drug.fills_per_month || drug.fills_per_month <= 0) {
+            return { success: false, error: `${drug.drug_name}: fills per month must be > 0.` };
+        }
+        if (!drug.acquisition_cost || drug.acquisition_cost <= 0) {
+            return { success: false, error: `${drug.drug_name}: acquisition cost is required.` };
+        }
+        if (drug.avg_reimbursement == null || drug.avg_reimbursement < 0) {
+            return { success: false, error: `${drug.drug_name}: reimbursement is required.` };
+        }
+    }
+
+    try {
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Deep-dive API error:', response.status, errorText);
+            return {
+                success: false,
+                error: `Analysis service returned ${response.status}. Please try again.`,
+            };
+        }
+
+        const result = await response.json();
+
+        // Return the DeepDiveResponse to the page
+        return {
+            success: result.success,
+            pharmacyName: result.pharmacy_name,
+            totalMonthlyLoss: result.total_monthly_loss,
+            totalAnnualLoss: result.total_annual_loss,
+            losingDrugCount: result.losing_drug_count,
+            weightedAvgLoss: result.weighted_avg_loss_per_fill,
+            breakevenFills: result.breakeven_fills,
+            hasMfp: result.has_mfp,
+            pdfBase64: result.pdf_base64 || null,
+            filename: result.filename,
+            emailSent: result.email_sent,
+            message: result.message,
+        };
+
+    } catch (err) {
+        console.error('Deep-dive API call failed:', err);
+
+        if (err.message && err.message.includes('timeout')) {
+            return {
+                success: false,
+                error: 'The analysis service is generating your report. '
+                     + 'This can take up to 60 seconds for large analyses. '
+                     + 'Please try again.',
+            };
+        }
+
+        return {
+            success: false,
+            error: 'Unable to reach the analysis service. Please try again later.',
+        };
+    }
+}
+
+/**
+ * Warm up the API so the actual deep-dive call doesn't cold-start.
+ * Call this when the deep-dive page loads.
+ */
+export async function warmUpApi() {
+    try {
+        await fetch('https://texume-api.onrender.com/health', {
+            method: 'GET',
+        });
+        return true;
+    } catch {
+        return false;
+    }
+}
