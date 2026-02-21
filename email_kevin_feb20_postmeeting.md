@@ -13,9 +13,9 @@ The dashboard is now behind authentication. Share these with Arica, Amy, and Del
 
 - URL: https://rmm-intel-hub.onrender.com
 - Username: rmm
-- Password: RMM7497v1$
+- Password: (shared via secure channel)
 
-Note: Render free tier sleeps after inactivity. First load may take 30-60 seconds to wake up. After that it's instant.
+Note: Running on Render Starter plan (always-on). No cold start delays.
 
 **Action Items (Matthew)**
 
