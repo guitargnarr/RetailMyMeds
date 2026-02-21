@@ -4,12 +4,13 @@ RMM Pharmacy Scoring Engine
 ============================
 7-factor weighted percentile-rank scoring system.
 
-Input:  State_Outreach_Lists_Verified/ALL_VERIFIED_CLEAN.csv (33,185 rows)
+Input:  reference_data/pharmacies_with_exposure.csv (33,185 rows, exposure-enriched)
+        reference_data/glp1_loss_per_fill.json (NADAC-weighted loss data)
 Output: Deliverables/rmm_targeting_feb2026.csv (full scored)
         Deliverables/rmm_targeting_grade_A_feb2026.csv (Grade A subset)
 
 Scoring factors (weights sum to 1.0):
-  25% - State GLP-1 cost per pharmacy (higher = more GLP-1 exposure)
+  25% - GLP-1 exposure index (pharmacy-differentiated, 0-100)
   20% - ZIP diabetes prevalence (higher = more need)
   15% - ZIP % age 65+ (higher = more Medicare exposure)
   10% - ZIP obesity prevalence (higher = comorbidity signal)
@@ -28,14 +29,20 @@ Grade assignment by cumulative cutoff using round():
   C = next round(n * 0.70) - A - B    (Standard)
   D = remainder                        (Monitor)
 
+GLP-1 loss methodology:
+  Before: flat $37/fill (misquoted NCPA 2023 informal survey)
+  After:  NADAC-weighted per drug per state (~$19-27 structural spread)
+  Source: data.medicaid.gov NADAC + CMS Part D prescribing volume
+
 Usage:
   python3 score_pharmacies.py
-  python3 score_pharmacies.py --input clean.csv --output-dir out/
+  python3 score_pharmacies.py --input exposure.csv --output-dir out/
 
 Dependencies: pandas, numpy (standard data science stack)
 """
 
 import csv
+import json
 import os
 import sys
 import argparse
@@ -49,8 +56,12 @@ from rucc_enrich import build_zip_lookup
 
 # --- Configuration ---
 
+BUILD_DIR = Path(__file__).resolve().parent
+REFERENCE_DIR = BUILD_DIR / 'reference_data'
+LOSS_PER_FILL_PATH = REFERENCE_DIR / 'glp1_loss_per_fill.json'
+
 WEIGHTS = {
-    'state_glp1_cost_per_pharmacy': 0.25,
+    'glp1_exposure_index': 0.25,
     'zip_diabetes_pct': 0.20,
     'zip_pct_65_plus': 0.15,
     'zip_obesity_pct': 0.10,
@@ -59,7 +70,7 @@ WEIGHTS = {
     'zip_population': 0.10,     # inverted
 }
 
-FACTORS_NORMAL = ['state_glp1_cost_per_pharmacy', 'zip_diabetes_pct',
+FACTORS_NORMAL = ['glp1_exposure_index', 'zip_diabetes_pct',
                   'zip_obesity_pct', 'zip_pct_65_plus']
 FACTORS_INVERTED = ['zip_median_income', 'zip_population']
 
@@ -78,13 +89,41 @@ GRADE_PRIORITY = {
     'D': 'Monitor',
 }
 
-# GLP-1 loss: $37 per fill (NCPA survey data)
-LOSS_PER_FILL = 37
+# GLP-1 loss per fill: loaded from NADAC analysis at runtime
+# Fallback to $37 NCPA if NADAC data not yet generated
+LOSS_PER_FILL_FALLBACK = 37
+
+
+def _load_loss_per_fill() -> tuple[float, dict[str, float]]:
+    """Load NADAC-weighted loss per fill data.
+
+    Returns:
+        (national_loss_per_fill, state_loss_map)
+        state_loss_map: state -> weighted_loss_per_fill
+    """
+    if not LOSS_PER_FILL_PATH.exists():
+        print(f"  WARN: {LOSS_PER_FILL_PATH} not found. "
+              f"Using fallback ${LOSS_PER_FILL_FALLBACK}/fill.")
+        return LOSS_PER_FILL_FALLBACK, {}
+
+    with open(LOSS_PER_FILL_PATH, 'r') as f:
+        data = json.load(f)
+
+    national = data.get('national_weighted_loss_per_fill', LOSS_PER_FILL_FALLBACK)
+    state_map = {}
+    for state, info in data.get('per_state', {}).items():
+        state_map[state] = info.get('weighted_loss_per_fill', national)
+
+    print(f"  NADAC loss per fill: national ${national:.2f}, "
+          f"{len(state_map)} states loaded")
+    return national, state_map
+
 
 OUTPUT_COLUMNS = [
     'npi', 'pharmacy_name', 'owner_name', 'city', 'state', 'zip', 'phone',
     'grade', 'outreach_priority', 'rmm_score',
-    'est_monthly_glp1_fills', 'est_annual_glp1_loss',
+    'glp1_exposure_index', 'nearby_glp1_prescriber_claims',
+    'est_monthly_glp1_fills', 'est_loss_per_fill', 'est_annual_glp1_loss',
     'hpsa_designated', 'hpsa_score',
     'zip_diabetes_pct', 'zip_obesity_pct', 'zip_pct_65_plus',
     'zip_median_income', 'zip_population', 'state_glp1_cost_per_pharmacy',
@@ -115,7 +154,7 @@ ScoredRow = dict[str, object]
 
 
 def score_pharmacies(input_path: str, output_dir: str) -> list[ScoredRow]:
-    """Score pharmacies from clean CSV and write targeting CSVs."""
+    """Score pharmacies from exposure-enriched CSV and write targeting CSVs."""
 
     df = pd.read_csv(
         input_path, dtype={'npi': str, 'zip': str, 'phone': str},
@@ -123,14 +162,19 @@ def score_pharmacies(input_path: str, output_dir: str) -> list[ScoredRow]:
     n = len(df)
     print(f"Scoring {n:,} pharmacies from {input_path}")
 
+    # Load NADAC-weighted loss per fill
+    national_loss, state_loss_map = _load_loss_per_fill()
+
     # Convert numeric columns
     numeric_cols = [
+        'glp1_exposure_index', 'nearby_glp1_prescriber_claims',
         'state_glp1_cost_per_pharmacy',
         'zip_diabetes_pct', 'zip_obesity_pct',
         'zip_pct_65_plus', 'zip_median_income',
         'zip_population', 'hpsa_score',
         'hpsa_designated',
         'state_glp1_claims_per_pharmacy',
+        'est_monthly_glp1_fills',
     ]
     for col in numeric_cols:
         if col in df.columns:
@@ -159,7 +203,7 @@ def score_pharmacies(input_path: str, output_dir: str) -> list[ScoredRow]:
     w = WEIGHTS
     r = {k: df[f'{k}_rank'] for k in w}
     df['rmm_score'] = (
-        w['state_glp1_cost_per_pharmacy'] * r['state_glp1_cost_per_pharmacy']
+        w['glp1_exposure_index'] * r['glp1_exposure_index']
         + w['zip_diabetes_pct'] * r['zip_diabetes_pct']
         + w['zip_pct_65_plus'] * r['zip_pct_65_plus']
         + w['zip_obesity_pct'] * r['zip_obesity_pct']
@@ -169,13 +213,28 @@ def score_pharmacies(input_path: str, output_dir: str) -> list[ScoredRow]:
     ).round(1)
 
     # --- GLP-1 fill estimates ---
-    claims = df['state_glp1_claims_per_pharmacy']
-    df['est_monthly_glp1_fills'] = (
-        (claims / 12).round(0).fillna(0).astype(int)
-    )
+    # Monthly fills come from exposure index (pre-computed in
+    # build_glp1_exposure_index.py, proportionally distributed
+    # from state totals). Fall back to state avg if column missing.
+    if 'est_monthly_glp1_fills' in df.columns:
+        df['est_monthly_glp1_fills'] = (
+            df['est_monthly_glp1_fills'].fillna(0).astype(int)
+        )
+    else:
+        claims = df['state_glp1_claims_per_pharmacy']
+        df['est_monthly_glp1_fills'] = (
+            (claims / 12).round(0).fillna(0).astype(int)
+        )
+
+    # Per-pharmacy loss per fill (NADAC-weighted, per-state drug mix)
+    df['est_loss_per_fill'] = df['state'].map(
+        lambda st: state_loss_map.get(st, national_loss)
+    ).round(2)
+
+    # Annual loss = monthly fills * 12 * state-specific loss per fill
     df['est_annual_glp1_loss'] = (
-        (claims * LOSS_PER_FILL).round(0).fillna(0).astype(int)
-    )
+        df['est_monthly_glp1_fills'] * 12 * df['est_loss_per_fill']
+    ).round(0).fillna(0).astype(int)
 
     # --- Sort by score descending ---
     df = df.sort_values(
@@ -218,7 +277,14 @@ def score_pharmacies(input_path: str, output_dir: str) -> list[ScoredRow]:
             'grade': row['grade'],
             'outreach_priority': row['outreach_priority'],
             'rmm_score': row['rmm_score'],
+            'glp1_exposure_index': row.get('glp1_exposure_index', 0),
+            'nearby_glp1_prescriber_claims': int(
+                row.get('nearby_glp1_prescriber_claims', 0) or 0
+            ),
             'est_monthly_glp1_fills': row['est_monthly_glp1_fills'],
+            'est_loss_per_fill': format_currency(
+                row.get('est_loss_per_fill', 0),
+            ),
             'est_annual_glp1_loss': (
                 format_currency(row['est_annual_glp1_loss'])
                 if row['est_annual_glp1_loss'] else '$0'
@@ -300,6 +366,11 @@ def score_pharmacies(input_path: str, output_dir: str) -> list[ScoredRow]:
         a = arica[0]
         print(f"\nCentral Kentucky Apothecary: "
               f"score {a['rmm_score']}, grade {a['grade']}")
+        print(f"  exposure_index: {a.get('glp1_exposure_index', 'N/A')}")
+        print(f"  nearby_claims: {a.get('nearby_glp1_prescriber_claims', 'N/A')}")
+        print(f"  monthly_fills: {a.get('est_monthly_glp1_fills', 'N/A')}")
+        print(f"  loss_per_fill: {a.get('est_loss_per_fill', 'N/A')}")
+        print(f"  annual_loss: {a.get('est_annual_glp1_loss', 'N/A')}")
 
     # Big Jim's check
     bigjim = [r for r in output_rows
@@ -315,7 +386,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='RMM Pharmacy Scoring Engine')
     parser.add_argument(
         '--input', default=None,
-        help='Path to clean verified CSV',
+        help='Path to exposure-enriched CSV (default: pharmacies_with_exposure.csv)',
     )
     parser.add_argument(
         '--output-dir', default=None,
@@ -326,8 +397,7 @@ if __name__ == '__main__':
     repo_root = Path(__file__).resolve().parent.parent.parent
     input_path = (
         args.input
-        or repo_root / 'State_Outreach_Lists_Verified'
-        / 'ALL_VERIFIED_CLEAN.csv'
+        or REFERENCE_DIR / 'pharmacies_with_exposure.csv'
     )
     output_dir = args.output_dir or repo_root / 'Deliverables'
 

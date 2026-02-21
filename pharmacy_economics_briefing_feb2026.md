@@ -113,7 +113,7 @@ These reforms were originally included in the December 2024 spending bill but we
 
 **GLP-1 Receptor Agonists (the worst offender):**
 - **95% of pharmacists** who dispense GLP-1 drugs (Ozempic, Wegovy, Mounjaro, etc.) report **losing money** on every fill
-- Average loss: more than **$37 per 30-day supply**
+- Average loss: **$46-56 per 30-day supply** (NADAC-weighted by drug mix; varies by state)
 - **14%** of independent pharmacies have stopped stocking GLP-1s entirely
 - **59%** are considering dropping them
 - PBM reimbursement averages **96% of WAC or lower**, below wholesale acquisition cost
@@ -282,7 +282,7 @@ A peer-reviewed study in Health Affairs found that more U.S. pharmacies closed t
 
 1. **The DIR reform "worked" structurally but not financially.** Retroactive clawbacks ended January 2024, but PBMs responded by crushing point-of-sale reimbursement. 99% of independents saw lower reimbursements post-reform.
 
-2. **Half of independent pharmacies lose money on 30%+ of their scripts.** GLP-1s are the most extreme case (95% of pharmacists lose ~$37/fill), but generics and specialty drugs are also frequently underwater.
+2. **Half of independent pharmacies lose money on 30%+ of their scripts.** GLP-1s are the most extreme case (95% of pharmacists lose ~$46-56/fill, NADAC-weighted), but generics and specialty drugs are also frequently underwater.
 
 3. **The February 2026 PBM Reform Act is historic but not yet operational.** Key provisions (bona fide service fees, any-willing-pharmacy) don't take effect until 2028-2029. PBMs will adapt.
 

@@ -28,6 +28,7 @@ _CSV_PATH = (
 
 _DOLLAR_COLS = {
     'est_annual_glp1_loss',
+    'est_loss_per_fill',
     'zip_median_income',
     'state_glp1_cost_per_pharmacy',
 }
@@ -125,8 +126,14 @@ def format_pharmacy_context(row: dict) -> str:
         f"({row.get('outreach_priority', '')})",
         f"RMM Score: {row.get('rmm_score', '')}",
         '',
+        f"GLP-1 Exposure Index: "
+        f"{row.get('glp1_exposure_index', '')}/100",
+        f"Nearby Prescriber Claims: "
+        f"{row.get('nearby_glp1_prescriber_claims', '')}",
         f"Est Monthly GLP-1 Fills: "
         f"{row.get('est_monthly_glp1_fills', '')}",
+        f"Est Loss Per Fill: "
+        f"${row.get('est_loss_per_fill', '')}",
         f"Est Annual GLP-1 Loss: "
         f"${row.get('est_annual_glp1_loss', '')}",
         '',

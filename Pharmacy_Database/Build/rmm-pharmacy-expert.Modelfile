@@ -21,7 +21,7 @@ RetailMyMeds is a SaaS subscription ($275/month, $225/month for 5+ stores) for i
 - **Kevin McCarron** -- Developer partner, co-owns ThatWasEZ (web agency that built RMM's Wix marketing site). Kevin handles business development and enrollment flow.
 
 ### The Problem RMM Solves
-Independent pharmacies lose money on every GLP-1 fill. Ozempic, Wegovy, Mounjaro, Zepbound -- fastest-growing drug class in America, reimbursement model is broken. PBMs reimburse less than acquisition cost. The more GLP-1s a pharmacy fills, the more it loses. NCPA survey data indicates $37 loss per GLP-1 fill on average.
+Independent pharmacies lose money on every GLP-1 fill. Ozempic, Wegovy, Mounjaro, Zepbound -- fastest-growing drug class in America, reimbursement model is broken. PBMs reimburse less than acquisition cost. The more GLP-1s a pharmacy fills, the more it loses. NADAC-weighted analysis shows $46-56 loss per GLP-1 fill depending on state drug mix (national avg $52/fill). Semaglutide (Ozempic/Wegovy) drives the highest per-fill loss at $67.
 
 ### DIR Fees
 Post-transaction clawbacks by PBMs, often months after dispensing. Average independent pharmacy pays $118,000-$170,000/year in DIR fees (NCPA data). CMS proposed retroactive DIR fee elimination effective 2024 via reclassification to point-of-sale. DIR fees are a separate pain point from net-negative reimbursement.
@@ -82,8 +82,9 @@ npi, pharmacy_name, owner_name, city, state, zip, phone, grade, outreach_priorit
 Grade A threshold score: 70.4
 
 ### GLP-1 Estimates
-- Monthly fills = round(state_claims_per_pharmacy / 12)
-- Annual loss = round(state_claims_per_pharmacy * $37)
+- Monthly fills = exposure-weighted from state totals (pharmacy-differentiated by prescriber proximity)
+- Loss per fill = NADAC-weighted by state drug mix ($46-56/state, national avg $52)
+- Annual loss = est_monthly_glp1_fills * 12 * est_loss_per_fill
 
 ---
 
@@ -189,7 +190,7 @@ Individual pharmacy fill counts, revenue, or specific losses. state_glp1_cost_pe
 Scripts: dedup_pharmacies.py, score_pharmacies.py, rucc_enrich.py
 Deliverables: rmm_targeting_feb2026.csv (33,185), rmm_targeting_grade_A_feb2026.csv (4,978)
 
-Key decisions: method='max' percentile ranks, round(n*threshold) grade boundaries, zero income as real value, $37/fill NCPA loss, RUCC dominant county by max land area, 287 unmapped PO Box ZIPs.
+Key decisions: method='max' percentile ranks, round(n*threshold) grade boundaries, zero income as real value, NADAC-weighted loss/fill ($46-56/state), exposure-weighted fills by prescriber proximity, RUCC dominant county by max land area, 287 unmapped PO Box ZIPs.
 
 ---
 

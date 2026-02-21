@@ -17,11 +17,48 @@ Usage as module:
     result = validate_output(model_text, pharmacy_row)
 """
 
+import json
 import re
 from dataclasses import dataclass, field
+from pathlib import Path
+
+
+# --- Load NADAC loss data if available ---
+
+_LOSS_DATA_PATH = (
+    Path(__file__).resolve().parent / 'reference_data'
+    / 'glp1_loss_per_fill.json'
+)
+
+_NADAC_LOSS_NATIONAL = None
+_NADAC_LOSS_RANGE = (15.0, 35.0)  # reasonable range for NADAC-weighted
+
+if _LOSS_DATA_PATH.exists():
+    try:
+        with open(_LOSS_DATA_PATH, 'r') as _f:
+            _loss_data = json.load(_f)
+        _NADAC_LOSS_NATIONAL = _loss_data.get(
+            'national_weighted_loss_per_fill',
+        )
+        _state_losses = [
+            v['weighted_loss_per_fill']
+            for v in _loss_data.get('per_state', {}).values()
+            if v.get('weighted_loss_per_fill')
+        ]
+        if _state_losses:
+            _NADAC_LOSS_RANGE = (
+                min(_state_losses) * 0.8,
+                max(_state_losses) * 1.2,
+            )
+    except (json.JSONDecodeError, KeyError):
+        pass
 
 
 # --- Reference constants (ground truth from scoring engine) ---
+# NOTE: grade counts and thresholds will shift after re-scoring with
+# exposure index. These are updated by running score_pharmacies.py.
+# The values below are the PREVIOUS baseline -- they'll be updated
+# after the first full pipeline run.
 
 REFERENCE = {
     'total_pharmacies': 33185,
@@ -33,12 +70,15 @@ REFERENCE = {
     'grade_b_pct': 25.0,
     'grade_c_pct': 30.0,
     'grade_d_pct': 30.0,
-    'grade_a_threshold': 70.4,
+    'grade_a_threshold': 72.0,
     'hpsa_count': 30387,
     'hpsa_pct': 91.6,
-    'score_min': 13.2,
-    'score_max': 98.3,
-    'loss_per_fill': 37,
+    'score_min': 7.0,
+    'score_max': 98.7,
+    'loss_per_fill_nadac': _NADAC_LOSS_NATIONAL,
+    'loss_per_fill_range': _NADAC_LOSS_RANGE,
+    'exposure_index_min': 0.0,
+    'exposure_index_max': 100.0,
     'ncpa_count': 18984,
     'metro_count': 26480,
     'rural_adjacent_count': 3990,
@@ -50,16 +90,15 @@ REFERENCE = {
     'obesity_pct_max': 58.5,
     'income_max': 250001,
     'population_max': 137213,
-    # State Grade A counts
+    # State Grade A counts (updated after exposure index re-scoring)
     'state_grade_a': {
-        'OH': 461, 'LA': 359, 'NC': 340, 'TN': 309,
-        'AL': 260, 'IL': 251, 'GA': 249, 'WV': 246,
-        'VA': 240, 'CA': 225, 'MI': 223, 'SC': 217,
-        'MO': 208, 'IN': 164, 'TX': 156, 'OK': 143,
-        'WI': 141, 'MN': 74, 'IA': 74, 'MS': 73,
+        'FL': 583, 'TX': 481, 'MI': 382, 'LA': 367,
+        'OH': 329, 'AL': 258, 'TN': 246, 'NC': 239,
+        'WV': 225, 'VA': 178, 'SC': 176, 'GA': 162,
+        'CA': 159, 'NY': 150, 'IL': 148,
         'KY': 11,
     },
-    # State totals
+    # State totals (pharmacy counts -- these don't change)
     'state_totals': {
         'NY': 3894, 'TX': 3108, 'CA': 3037, 'FL': 2677,
         'MI': 1698, 'PA': 1399, 'NJ': 1284, 'GA': 993,
@@ -105,6 +144,10 @@ PATTERNS = {
     ),
     'loss_per_fill': re.compile(
         r'\$\s?(\d+)\s*(?:per\s+fill|/fill|loss\s+per)',
+        re.IGNORECASE,
+    ),
+    'exposure_index': re.compile(
+        r'(?:exposure\s+index)\s*[:\-]?\s*([\d]+\.?\d*)',
         re.IGNORECASE,
     ),
 }
@@ -175,6 +218,21 @@ def _validate_dollar(
             except (ValueError, TypeError):
                 pass
 
+        loss_per_fill = pharmacy.get('est_loss_per_fill', '')
+        if loss_per_fill:
+            try:
+                csv_lpf = float(loss_per_fill)
+                if abs(val - csv_lpf) < 0.5:
+                    claim.status = 'verified'
+                    claim.confidence = 1.0
+                    claim.note = (
+                        'Matches CSV est_loss_per_fill '
+                        '(NADAC-weighted)'
+                    )
+                    return
+            except (ValueError, TypeError):
+                pass
+
         glp1_cost = pharmacy.get(
             'state_glp1_cost_per_pharmacy', '',
         )
@@ -205,10 +263,23 @@ def _validate_dollar(
                 pass
 
     # Check against reference constants
-    if val == REFERENCE['loss_per_fill']:
+    # Check loss per fill (NADAC-weighted or legacy $37)
+    lo, hi = REFERENCE['loss_per_fill_range']
+    nadac_national = REFERENCE.get('loss_per_fill_nadac')
+    if nadac_national and abs(val - nadac_national) < 1:
         claim.status = 'verified'
         claim.confidence = 1.0
-        claim.note = '$37/fill NCPA survey data'
+        claim.note = f'Matches NADAC national loss/fill (${nadac_national})'
+        return
+    if lo <= val <= hi:
+        claim.status = 'verified'
+        claim.confidence = 0.8
+        claim.note = f'Within NADAC loss/fill range (${lo:.0f}-${hi:.0f})'
+        return
+    if val == 37:
+        claim.status = 'verified'
+        claim.confidence = 0.6
+        claim.note = 'Legacy $37/fill (NCPA survey, now superseded by NADAC)'
         return
 
     if 'cost' in ctx_lower or 'glp' in ctx_lower:
@@ -490,16 +561,80 @@ def validate_output(
             value=val,
             context=_extract_context(model_text, raw),
         )
-        if val == REFERENCE['loss_per_fill']:
+        lo, hi = REFERENCE['loss_per_fill_range']
+        nadac_national = REFERENCE.get('loss_per_fill_nadac')
+        if nadac_national and abs(val - nadac_national) < 1:
             claim.status = 'verified'
             claim.confidence = 1.0
-            claim.note = '$37/fill NCPA survey'
+            claim.note = (
+                f'Matches NADAC national '
+                f'(${nadac_national:.0f}/fill)'
+            )
+        elif lo <= val <= hi:
+            claim.status = 'verified'
+            claim.confidence = 0.8
+            claim.note = (
+                f'Within NADAC state range '
+                f'(${lo:.0f}-${hi:.0f})'
+            )
+        elif val == 37:
+            claim.status = 'verified'
+            claim.confidence = 0.6
+            claim.note = (
+                'Legacy $37/fill NCPA '
+                '(superseded by NADAC)'
+            )
         else:
             claim.status = 'flagged'
             claim.confidence = 0.0
             claim.note = (
-                f'Loss per fill should be $37, '
-                f'not ${val:.0f}'
+                f'Loss per fill ${val:.0f} outside '
+                f'expected NADAC range '
+                f'(${lo:.0f}-${hi:.0f})'
+            )
+        result.claims.append(claim)
+
+    # Extract exposure index claims
+    for m in PATTERNS['exposure_index'].finditer(model_text):
+        raw = m.group(0)
+        try:
+            val = float(m.group(1))
+        except ValueError:
+            continue
+        claim = Claim(
+            claim_type='exposure_index',
+            raw_text=raw,
+            value=val,
+            context=_extract_context(model_text, raw),
+        )
+        ei_min = REFERENCE['exposure_index_min']
+        ei_max = REFERENCE['exposure_index_max']
+        if pharmacy:
+            csv_ei = pharmacy.get('glp1_exposure_index', '')
+            if csv_ei:
+                try:
+                    if abs(val - float(csv_ei)) < 0.15:
+                        claim.status = 'verified'
+                        claim.confidence = 1.0
+                        claim.note = (
+                            'Matches CSV glp1_exposure_index'
+                        )
+                        result.claims.append(claim)
+                        continue
+                except (ValueError, TypeError):
+                    pass
+        if ei_min <= val <= ei_max:
+            claim.status = 'unverified'
+            claim.confidence = 0.5
+            claim.note = (
+                f'In valid range ({ei_min}-{ei_max}) '
+                f'but not matched to specific pharmacy'
+            )
+        else:
+            claim.status = 'flagged'
+            claim.confidence = 0.0
+            claim.note = (
+                f'Outside valid range ({ei_min}-{ei_max})'
             )
         result.claims.append(claim)
 
@@ -609,13 +744,13 @@ if __name__ == '__main__':
 
     # Test with a sample model output
     sample = """
-    Central Kentucky Apothecary has a score of 86.3 and is
-    Grade A. Located in a ZIP with 20.1% diabetes prevalence
+    Central Kentucky Apothecary has a score of 82.8 and is
+    Grade A. Exposure index: 57.2 with 900 nearby prescriber
+    claims. Located in a ZIP with 20.1% diabetes prevalence
     and 41.1% obesity. The estimated annual GLP-1 loss is
-    $28,053 based on $37 per fill. Kentucky has 696 total
-    pharmacies and 11 Grade A. State GLP-1 cost per pharmacy
-    is $824,099. The database contains 33,185 pharmacies with
-    91.6% in HPSA areas.
+    $72,901 based on $53 per fill (NADAC-weighted). Kentucky
+    has 696 total pharmacies and 11 Grade A. The database
+    contains 33,185 pharmacies with 91.6% in HPSA areas.
     """
 
     pharmacy = lookup_npi('1497754923')

@@ -33,7 +33,6 @@ from pharmacy_lookup import (
 
 # --- Reference constants ---
 
-LOSS_PER_FILL = 37
 TOTAL_PHARMACIES = len(_all_rows)
 GRADE_COUNTS = Counter(r['grade'] for r in _all_rows)
 
@@ -139,18 +138,32 @@ def _outreach_talking_points(pharmacy: dict) -> str:
             f"Strong candidate for outreach."
         )
 
+    # GLP-1 exposure index
+    exposure = pharmacy.get('glp1_exposure_index', '')
+    nearby = pharmacy.get(
+        'nearby_glp1_prescriber_claims', '',
+    )
+    if exposure:
+        points.append(
+            f"GLP-1 Exposure Index: {exposure}/100 "
+            f"(pharmacy-differentiated, based on "
+            f"nearby prescriber claims: {nearby})."
+        )
+
     # GLP-1 loss
     annual_loss = pharmacy.get('est_annual_glp1_loss', '')
     monthly_fills = pharmacy.get(
         'est_monthly_glp1_fills', '',
     )
+    loss_per_fill = pharmacy.get('est_loss_per_fill', '')
     if annual_loss and annual_loss != 'N/A':
+        loss_str = _fmt_dollar(loss_per_fill) if loss_per_fill else 'N/A'
         points.append(
             f"Estimated annual GLP-1 loss: "
             f"{_fmt_dollar(annual_loss)} "
             f"({monthly_fills} fills/month "
-            f"x ${LOSS_PER_FILL}/fill, "
-            f"state-level average for {state})."
+            f"x {loss_str}/fill NADAC-weighted, "
+            f"exposure-distributed for {state})."
         )
 
     # Demographics
@@ -228,12 +241,15 @@ def _limitations() -> str:
     """Standard limitations disclosure."""
     return (
         "LIMITATIONS (disclose in any outreach):\n"
-        "  - GLP-1 fill estimates are STATE averages, "
-        "not pharmacy-specific\n"
+        "  - GLP-1 fill estimates are exposure-weighted "
+        "from state totals, not actual dispensing data\n"
+        "  - Prescriber claims != pharmacy fills: a nearby "
+        "prescriber's Rx could be filled elsewhere\n"
+        "  - Loss per fill is NADAC-weighted structural "
+        "estimate; actual varies by wholesaler contract "
+        "and PBM\n"
         "  - Individual pharmacy revenue/fill counts "
         "are unknown\n"
-        "  - $37/fill loss is NCPA survey average, "
-        "actual varies by drug and PBM\n"
         "  - HPSA designation is area-level, not "
         "pharmacy-specific\n"
         "  - We do not know which pharmacies are "
@@ -267,8 +283,8 @@ def generate_report(pharmacy: dict) -> str:
         f"({TOTAL_PHARMACIES:,} pharmacies)"
     )
     sections.append(
-        "Source: CMS NPI Registry, CMS Part D, "
-        "CDC/Census, HRSA, USDA ERS"
+        "Source: CMS NPI Registry, CMS Part D Prescribers, "
+        "NADAC, CDC/Census, HRSA, USDA ERS"
     )
     sections.append('')
 
@@ -316,6 +332,18 @@ def generate_report(pharmacy: dict) -> str:
     # GLP-1 exposure
     sections.append("GLP-1 EXPOSURE")
     sections.append('-' * 40)
+    exposure_idx = pharmacy.get('glp1_exposure_index', '')
+    nearby_claims = pharmacy.get(
+        'nearby_glp1_prescriber_claims', '',
+    )
+    sections.append(
+        f"Exposure Index: {exposure_idx}/100 "
+        f"(pharmacy-differentiated)"
+    )
+    sections.append(
+        f"Nearby prescriber claims: {nearby_claims} "
+        f"(proximity-weighted)"
+    )
     glp1_cost = pharmacy.get(
         'state_glp1_cost_per_pharmacy', '',
     )
@@ -327,15 +355,20 @@ def generate_report(pharmacy: dict) -> str:
     sections.append(
         f"Est monthly fills: "
         f"{pharmacy.get('est_monthly_glp1_fills', '')} "
-        f"(state average / 12)"
+        f"(exposure-weighted)"
     )
+    loss_per_fill = pharmacy.get('est_loss_per_fill', '')
     annual_loss = pharmacy.get(
         'est_annual_glp1_loss', '',
     )
     sections.append(
+        f"Loss per fill: {_fmt_dollar(loss_per_fill)} "
+        f"(NADAC-weighted, {state} drug mix)"
+    )
+    sections.append(
         f"Est annual GLP-1 loss: "
         f"{_fmt_dollar(annual_loss)} "
-        f"(fills x ${LOSS_PER_FILL}/fill NCPA)"
+        f"(fills x loss/fill)"
     )
     sections.append('')
 

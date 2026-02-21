@@ -73,10 +73,10 @@ Grade A rural breakdown: Metro 2,296 (46.1%), Rural-Adjacent 1,774 (35.6%), Rura
 - zip_population: 0 to 137,213
 
 ### GLP-1 Economics
-- $37 loss per fill (NCPA survey average)
-- est_monthly_fills = round(state_claims_per_pharmacy / 12)
-- est_annual_loss = round(state_claims_per_pharmacy * 37)
-- State-level averages only. No pharmacy-level fill data exists.
+- $46-56 loss per fill (NADAC-weighted by state drug mix, national avg $52)
+- est_monthly_fills = exposure-weighted from state totals by prescriber proximity
+- est_annual_loss = est_monthly_fills * 12 * est_loss_per_fill
+- Pharmacy-differentiated by GLP-1 exposure index (prescriber proximity + demographics)
 
 ### Arica's Pharmacy
 NPI: 1497754923, Central Kentucky Apothecary (DBA Dyer Drug)

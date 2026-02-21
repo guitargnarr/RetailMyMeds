@@ -1239,9 +1239,10 @@
     <div class="limitations-card animate-in animate-in-5">
       <div class="limitations-title">Limitations</div>
       <ul>
-        <li>GLP-1 fill estimates are STATE averages, not pharmacy-specific</li>
+        <li>GLP-1 fill estimates are exposure-weighted from state totals, not actual dispensing data</li>
+        <li>Prescriber claims != pharmacy fills: a nearby prescriber's Rx could be filled elsewhere</li>
+        <li>Loss per fill is NADAC-weighted structural estimate; actual varies by wholesaler contract and PBM</li>
         <li>Individual pharmacy revenue/fill counts are unknown</li>
-        <li>$37/fill loss is NCPA survey average, actual varies by drug and PBM</li>
         <li>HPSA designation is area-level, not pharmacy-specific</li>
         <li>We do not know which pharmacies are existing RMM customers</li>
       </ul>
@@ -1251,7 +1252,7 @@
 </main>
 
 <footer class="footer">
-  <span class="brand">RetailMyMeds</span> Intelligence Hub &middot; Source: CMS NPI Registry, CMS Part D, CDC/Census, HRSA, USDA ERS &middot; Feb 2026
+  <span class="brand">RetailMyMeds</span> Intelligence Hub &middot; Source: CMS NPI Registry, CMS Part D Prescribers, NADAC, CDC/Census, HRSA, USDA ERS &middot; Feb 2026
 </footer>
 
 <script>
@@ -1452,10 +1453,13 @@ async function loadReport(npi) {
     $('dataGrid').innerHTML = `
       <div class="data-card">
         <div class="data-card-header">GLP-1 Exposure</div>
+        <div class="data-row"><span class="data-key">Exposure Index</span><span class="data-val highlight">${p.exposure_index || 'N/A'}/100</span></div>
+        <div class="data-row"><span class="data-key">Nearby Prescriber Claims</span><span class="data-val">${Number(p.nearby_claims || 0).toLocaleString()}</span></div>
         <div class="data-row"><span class="data-key">State GLP-1 Cost/Pharmacy</span><span class="data-val">${fmtDollar(p.glp1_cost)}</span></div>
         <div class="data-row"><span class="data-key">Est Monthly Fills</span><span class="data-val">${p.monthly_fills}</span></div>
+        <div class="data-row"><span class="data-key">Loss Per Fill</span><span class="data-val">${fmtDollar(p.loss_per_fill)} <small>(NADAC)</small></span></div>
         <div class="data-row"><span class="data-key">Est Annual Loss</span><span class="data-val highlight">${fmtDollar(p.annual_loss)}</span></div>
-        <div class="data-row"><span class="data-key">Loss Formula</span><span class="data-val">${p.monthly_fills} x 12 x $37</span></div>
+        <div class="data-row"><span class="data-key">Loss Formula</span><span class="data-val">${p.monthly_fills} x 12 x ${fmtDollar(p.loss_per_fill)}</span></div>
       </div>
       <div class="data-card">
         <div class="data-card-header">ZIP Demographics</div>

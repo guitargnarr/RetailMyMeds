@@ -1,0 +1,27 @@
+{
+  "semaglutide": {
+    "nadac_per_unit": 639.138,
+    "brand_name": "OZEMPIC 0.25-0.5 MG/DOSE (2 MG/1.5 ML) PEN",
+    "effective_date": "2025-01-01"
+  },
+  "tirzepatide": {
+    "nadac_per_unit": 521.005,
+    "brand_name": "MOUNJARO 10 MG/0.5 ML PEN",
+    "effective_date": "2025-01-01"
+  },
+  "liraglutide": {
+    "nadac_per_unit": 86.8161,
+    "brand_name": "SAXENDA 18 MG/3 ML PEN",
+    "effective_date": "2025-02-19"
+  },
+  "dulaglutide": {
+    "nadac_per_unit": 476.4099,
+    "brand_name": "TRULICITY 0.75 MG/0.5 ML PEN",
+    "effective_date": "2025-01-01"
+  },
+  "exenatide": {
+    "nadac_per_unit": 234.2888,
+    "brand_name": "BYDUREON BCISE 2 MG AUTOINJECT",
+    "effective_date": "2025-02-19"
+  }
+}

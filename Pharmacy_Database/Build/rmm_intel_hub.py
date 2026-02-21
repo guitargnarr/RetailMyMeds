@@ -353,6 +353,8 @@ def api_state_export(state):
         'npi', 'pharmacy_name', 'owner_name',
         'city', 'state', 'zip', 'phone',
         'grade', 'rmm_score', 'outreach_priority',
+        'glp1_exposure_index', 'nearby_glp1_prescriber_claims',
+        'est_monthly_glp1_fills', 'est_loss_per_fill',
         'est_annual_glp1_loss', 'hpsa_designated',
         'zip_diabetes_pct', 'zip_obesity_pct',
     ]
@@ -585,8 +587,17 @@ def _pharmacy_summary(r: dict) -> dict:
         'hpsa': r.get('hpsa_designated', ''),
         'rucc': r.get('rucc_code', ''),
         'rural': r.get('rural_classification', ''),
+        'exposure_index': r.get(
+            'glp1_exposure_index', '',
+        ),
+        'nearby_claims': r.get(
+            'nearby_glp1_prescriber_claims', '',
+        ),
         'monthly_fills': r.get(
             'est_monthly_glp1_fills', '',
+        ),
+        'loss_per_fill': r.get(
+            'est_loss_per_fill', '',
         ),
         'annual_loss': r.get(
             'est_annual_glp1_loss', '',
@@ -606,6 +617,15 @@ def _pharmacy_detail(r: dict) -> dict:
         'population': r.get('zip_population', ''),
         'glp1_cost': r.get(
             'state_glp1_cost_per_pharmacy', '',
+        ),
+        'exposure_index': r.get(
+            'glp1_exposure_index', '',
+        ),
+        'nearby_claims': r.get(
+            'nearby_glp1_prescriber_claims', '',
+        ),
+        'loss_per_fill': r.get(
+            'est_loss_per_fill', '',
         ),
         'county_fips': r.get('county_fips', ''),
         'county_name': r.get('county_name', ''),
@@ -679,19 +699,36 @@ def _talking_points(pharmacy: dict) -> list[dict]:
             ),
         })
 
+    # Exposure index
+    exposure = pharmacy.get('glp1_exposure_index', '')
+    nearby = pharmacy.get('nearby_glp1_prescriber_claims', '')
+    if exposure:
+        points.append({
+            'label': 'Exposure',
+            'text': (
+                f"GLP-1 Exposure Index: {exposure}/100 "
+                f"(nearby prescriber claims: {nearby})."
+            ),
+        })
+
     annual_loss = pharmacy.get('est_annual_glp1_loss', '')
     fills = pharmacy.get('est_monthly_glp1_fills', '')
+    loss_per_fill = pharmacy.get('est_loss_per_fill', '')
     if annual_loss and annual_loss != 'N/A':
         try:
             loss_fmt = f"${int(float(annual_loss)):,}"
         except (ValueError, TypeError):
             loss_fmt = annual_loss
+        try:
+            lpf_fmt = f"${float(loss_per_fill):,.0f}"
+        except (ValueError, TypeError):
+            lpf_fmt = 'N/A'
         points.append({
             'label': 'GLP-1 Loss',
             'text': (
                 f"Est. annual loss: {loss_fmt} "
-                f"({fills} fills/mo x $37/fill, "
-                f"{state} state average)."
+                f"({fills} fills/mo x {lpf_fmt}/fill "
+                f"NADAC-weighted, {state})."
             ),
         })
 

@@ -1,0 +1,324 @@
+{
+  "national_weighted_loss_per_fill": 52.16,
+  "methodology": "Structural loss = NADAC acquisition cost - PBM reimbursement. PBMs reimburse ~96.5% of NADAC on GLP-1s (3.5% underwater). Based on NCPA survey data showing $42/fill avg loss on ~$1000 acquisition (~4.2% underwater). We use conservative 3.5% estimate. Weighted by CMS Part D prescribing volume (national and per-state drug mix). NADAC source: data.medicaid.gov (weekly pharmacy acquisition costs). Note: actual pharmacy acquisition costs vary by wholesaler contract, GPO membership, and volume. NADAC is a national average. Reimbursement varies by PBM contract.",
+  "data_sources": {
+    "nadac": "data.medicaid.gov NADAC (National Average Drug Acquisition Cost)",
+    "prescribing_volume": "CMS Part D Prescribers by Provider and Drug",
+    "reimbursement_ratio": 0.965,
+    "underwater_pct": "3.5%"
+  },
+  "per_drug": {
+    "semaglutide": {
+      "nadac_per_unit": 639.138,
+      "units_per_fill": 3.0,
+      "acquisition_per_fill": 1917.41,
+      "reimbursement_ratio": 0.965,
+      "est_reimbursement_per_fill": 1850.3,
+      "structural_loss_per_fill": 67.11,
+      "brand_name": "OZEMPIC 0.25-0.5 MG/DOSE (2 MG/1.5 ML) PEN",
+      "effective_date": "2025-01-01",
+      "national_claims_pct": 49.2
+    },
+    "tirzepatide": {
+      "nadac_per_unit": 521.005,
+      "units_per_fill": 2.4,
+      "acquisition_per_fill": 1250.41,
+      "reimbursement_ratio": 0.965,
+      "est_reimbursement_per_fill": 1206.65,
+      "structural_loss_per_fill": 43.76,
+      "brand_name": "MOUNJARO 10 MG/0.5 ML PEN",
+      "effective_date": "2025-01-01",
+      "national_claims_pct": 11.2
+    },
+    "liraglutide": {
+      "nadac_per_unit": 86.8161,
+      "units_per_fill": 18.0,
+      "acquisition_per_fill": 1562.69,
+      "reimbursement_ratio": 0.965,
+      "est_reimbursement_per_fill": 1508.0,
+      "structural_loss_per_fill": 54.69,
+      "brand_name": "SAXENDA 18 MG/3 ML PEN",
+      "effective_date": "2025-02-19",
+      "national_claims_pct": 5.7
+    },
+    "dulaglutide": {
+      "nadac_per_unit": 476.4099,
+      "units_per_fill": 2.0,
+      "acquisition_per_fill": 952.82,
+      "reimbursement_ratio": 0.965,
+      "est_reimbursement_per_fill": 919.47,
+      "structural_loss_per_fill": 33.35,
+      "brand_name": "TRULICITY 0.75 MG/0.5 ML PEN",
+      "effective_date": "2025-01-01",
+      "national_claims_pct": 32.5
+    },
+    "exenatide": {
+      "nadac_per_unit": 234.2888,
+      "units_per_fill": 2.4,
+      "acquisition_per_fill": 562.29,
+      "reimbursement_ratio": 0.965,
+      "est_reimbursement_per_fill": 542.61,
+      "structural_loss_per_fill": 19.68,
+      "brand_name": "BYDUREON BCISE 2 MG AUTOINJECT",
+      "effective_date": "2025-02-19",
+      "national_claims_pct": 1.4
+    }
+  },
+  "per_state": {
+    "AK": {
+      "weighted_loss_per_fill": 55.7,
+      "dominant_drug": "semaglutide",
+      "dominant_drug_pct": 58.7
+    },
+    "AL": {
+      "weighted_loss_per_fill": 52.24,
+      "dominant_drug": "semaglutide",
+      "dominant_drug_pct": 47.2
+    },
+    "AR": {
+      "weighted_loss_per_fill": 53.85,
+      "dominant_drug": "semaglutide",
+      "dominant_drug_pct": 51.0
+    },
+    "AZ": {
+      "weighted_loss_per_fill": 51.38,
+      "dominant_drug": "semaglutide",
+      "dominant_drug_pct": 46.8
+    },
+    "CA": {
+      "weighted_loss_per_fill": 53.36,
+      "dominant_drug": "semaglutide",
+      "dominant_drug_pct": 53.3
+    },
+    "CO": {
+      "weighted_loss_per_fill": 49.25,
+      "dominant_drug": "semaglutide",
+      "dominant_drug_pct": 39.5
+    },
+    "CT": {
+      "weighted_loss_per_fill": 53.95,
+      "dominant_drug": "semaglutide",
+      "dominant_drug_pct": 54.9
+    },
+    "DC": {
+      "weighted_loss_per_fill": 49.34,
+      "dominant_drug": "dulaglutide",
+      "dominant_drug_pct": 44.6
+    },
+    "DE": {
+      "weighted_loss_per_fill": 52.22,
+      "dominant_drug": "semaglutide",
+      "dominant_drug_pct": 51.0
+    },
+    "FL": {
+      "weighted_loss_per_fill": 53.13,
+      "dominant_drug": "semaglutide",
+      "dominant_drug_pct": 53.1
+    },
+    "GA": {
+      "weighted_loss_per_fill": 53.22,
+      "dominant_drug": "semaglutide",
+      "dominant_drug_pct": 51.4
+    },
+    "HI": {
+      "weighted_loss_per_fill": 54.67,
+      "dominant_drug": "semaglutide",
+      "dominant_drug_pct": 57.1
+    },
+    "IA": {
+      "weighted_loss_per_fill": 54.48,
+      "dominant_drug": "semaglutide",
+      "dominant_drug_pct": 56.7
+    },
+    "ID": {
+      "weighted_loss_per_fill": 52.91,
+      "dominant_drug": "semaglutide",
+      "dominant_drug_pct": 51.6
+    },
+    "IL": {
+      "weighted_loss_per_fill": 52.46,
+      "dominant_drug": "semaglutide",
+      "dominant_drug_pct": 50.3
+    },
+    "IN": {
+      "weighted_loss_per_fill": 51.61,
+      "dominant_drug": "semaglutide",
+      "dominant_drug_pct": 46.6
+    },
+    "KS": {
+      "weighted_loss_per_fill": 53.31,
+      "dominant_drug": "semaglutide",
+      "dominant_drug_pct": 51.3
+    },
+    "KY": {
+      "weighted_loss_per_fill": 53.29,
+      "dominant_drug": "semaglutide",
+      "dominant_drug_pct": 51.9
+    },
+    "LA": {
+      "weighted_loss_per_fill": 51.39,
+      "dominant_drug": "semaglutide",
+      "dominant_drug_pct": 45.0
+    },
+    "MA": {
+      "weighted_loss_per_fill": 45.81,
+      "dominant_drug": "dulaglutide",
+      "dominant_drug_pct": 56.8
+    },
+    "MD": {
+      "weighted_loss_per_fill": 51.69,
+      "dominant_drug": "semaglutide",
+      "dominant_drug_pct": 49.5
+    },
+    "ME": {
+      "weighted_loss_per_fill": 49.04,
+      "dominant_drug": "dulaglutide",
+      "dominant_drug_pct": 44.3
+    },
+    "MI": {
+      "weighted_loss_per_fill": 48.82,
+      "dominant_drug": "dulaglutide",
+      "dominant_drug_pct": 42.6
+    },
+    "MN": {
+      "weighted_loss_per_fill": 53.19,
+      "dominant_drug": "semaglutide",
+      "dominant_drug_pct": 50.5
+    },
+    "MO": {
+      "weighted_loss_per_fill": 52.53,
+      "dominant_drug": "semaglutide",
+      "dominant_drug_pct": 49.0
+    },
+    "MS": {
+      "weighted_loss_per_fill": 54.93,
+      "dominant_drug": "semaglutide",
+      "dominant_drug_pct": 56.3
+    },
+    "MT": {
+      "weighted_loss_per_fill": 52.55,
+      "dominant_drug": "semaglutide",
+      "dominant_drug_pct": 48.6
+    },
+    "NC": {
+      "weighted_loss_per_fill": 54.13,
+      "dominant_drug": "semaglutide",
+      "dominant_drug_pct": 54.9
+    },
+    "ND": {
+      "weighted_loss_per_fill": 55.79,
+      "dominant_drug": "semaglutide",
+      "dominant_drug_pct": 57.4
+    },
+    "NE": {
+      "weighted_loss_per_fill": 50.98,
+      "dominant_drug": "semaglutide",
+      "dominant_drug_pct": 45.7
+    },
+    "NH": {
+      "weighted_loss_per_fill": 50.68,
+      "dominant_drug": "semaglutide",
+      "dominant_drug_pct": 44.2
+    },
+    "NJ": {
+      "weighted_loss_per_fill": 52.52,
+      "dominant_drug": "semaglutide",
+      "dominant_drug_pct": 51.2
+    },
+    "NM": {
+      "weighted_loss_per_fill": 49.18,
+      "dominant_drug": "dulaglutide",
+      "dominant_drug_pct": 43.3
+    },
+    "NV": {
+      "weighted_loss_per_fill": 52.79,
+      "dominant_drug": "semaglutide",
+      "dominant_drug_pct": 51.3
+    },
+    "NY": {
+      "weighted_loss_per_fill": 52.47,
+      "dominant_drug": "semaglutide",
+      "dominant_drug_pct": 51.6
+    },
+    "OH": {
+      "weighted_loss_per_fill": 49.14,
+      "dominant_drug": "dulaglutide",
+      "dominant_drug_pct": 41.8
+    },
+    "OK": {
+      "weighted_loss_per_fill": 53.33,
+      "dominant_drug": "semaglutide",
+      "dominant_drug_pct": 51.6
+    },
+    "OR": {
+      "weighted_loss_per_fill": 51.55,
+      "dominant_drug": "semaglutide",
+      "dominant_drug_pct": 47.3
+    },
+    "PA": {
+      "weighted_loss_per_fill": 50.34,
+      "dominant_drug": "semaglutide",
+      "dominant_drug_pct": 44.6
+    },
+    "RI": {
+      "weighted_loss_per_fill": 50.21,
+      "dominant_drug": "semaglutide",
+      "dominant_drug_pct": 45.9
+    },
+    "SC": {
+      "weighted_loss_per_fill": 52.41,
+      "dominant_drug": "semaglutide",
+      "dominant_drug_pct": 49.1
+    },
+    "SD": {
+      "weighted_loss_per_fill": 55.75,
+      "dominant_drug": "semaglutide",
+      "dominant_drug_pct": 59.7
+    },
+    "TN": {
+      "weighted_loss_per_fill": 53.47,
+      "dominant_drug": "semaglutide",
+      "dominant_drug_pct": 53.3
+    },
+    "TX": {
+      "weighted_loss_per_fill": 53.78,
+      "dominant_drug": "semaglutide",
+      "dominant_drug_pct": 53.9
+    },
+    "UT": {
+      "weighted_loss_per_fill": 48.77,
+      "dominant_drug": "dulaglutide",
+      "dominant_drug_pct": 40.8
+    },
+    "VA": {
+      "weighted_loss_per_fill": 50.45,
+      "dominant_drug": "semaglutide",
+      "dominant_drug_pct": 44.6
+    },
+    "VT": {
+      "weighted_loss_per_fill": 52.53,
+      "dominant_drug": "semaglutide",
+      "dominant_drug_pct": 50.2
+    },
+    "WA": {
+      "weighted_loss_per_fill": 53.33,
+      "dominant_drug": "semaglutide",
+      "dominant_drug_pct": 49.4
+    },
+    "WI": {
+      "weighted_loss_per_fill": 48.42,
+      "dominant_drug": "dulaglutide",
+      "dominant_drug_pct": 46.1
+    },
+    "WV": {
+      "weighted_loss_per_fill": 53.23,
+      "dominant_drug": "semaglutide",
+      "dominant_drug_pct": 52.4
+    },
+    "WY": {
+      "weighted_loss_per_fill": 52.61,
+      "dominant_drug": "semaglutide",
+      "dominant_drug_pct": 49.4
+    }
+  }
+}

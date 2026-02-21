@@ -240,7 +240,7 @@ NPPES NPI Registry\textsuperscript{8} & Pharmacy identity, status, owner & CMS \
 
 \vspace{0.15in}
 
-Loss-per-fill economics (\$37--\$42/fill) come from NCPA survey data\textsuperscript{1,2} and per-drug WAC-minus-reimbursement calculations from the GLP-1 Value Proposition. The \$275/month subscription price and 5\% moderate routing rate come from the RetailMyMeds GLP-1 Value Proposition.
+Loss-per-fill economics (\$46--\$56/fill) are NADAC-weighted by state drug mix, computed from CMS NADAC (National Average Drug Acquisition Cost) data and Part D prescribing volume. National weighted average: \$52/fill. The \$275/month subscription price and 5\% moderate routing rate come from the RetailMyMeds GLP-1 Value Proposition.
 
 %% ─────────────────────────────────────────────────────────────
 \section{How the Scoring Works}
@@ -304,7 +304,7 @@ Each pharmacy is tagged with the \textbf{pain point that should lead the convers
 \toprule
 \textbf{Segment} & \textbf{Count} & \textbf{Lead Message} \\
 \midrule
-GLP-1 Loss & 30,808 (73.7\%) & ``You're losing \$37--\$42 on every GLP-1 fill. RetailMyMeds routes those prescriptions so you stop absorbing the loss.'' \\
+GLP-1 Loss & 30,808 (73.7\%) & ``You're losing \$46--\$56 on every GLP-1 fill. RetailMyMeds routes those prescriptions so you stop absorbing the loss.'' \\
 DIR Fee Squeeze & 7,424 (17.8\%) & ``Your area is medically underserved and your margins are the thinnest in the country. Routing below-cost prescriptions is how you survive.'' \\
 MFP Cash Flow & 3,543 (8.5\%) & ``MFP is creating a \$10,838/week cash flow gap. RetailMyMeds' scheduling intelligence addresses the timing directly.'' \\
 \bottomrule
@@ -337,9 +337,9 @@ The CSV includes three loss scenarios per pharmacy:
 \toprule
 \textbf{Scenario} & \textbf{Loss/Fill} & \textbf{Source} \\
 \midrule
-Conservative & \$37/fill & Per-drug WAC/reimbursement spread\textsuperscript{1,9} \\
-Mid-range & \$39.50/fill & Midpoint \\
-High & \$42/fill & NCPA pharmacist survey\textsuperscript{2} \\
+Low (dulaglutide-heavy states) & \$46/fill & NADAC-weighted, MA/WI/UT drug mix \\
+National average & \$52/fill & NADAC-weighted, national drug mix \\
+High (semaglutide-heavy states) & \$56/fill & NADAC-weighted, AK/ND/SD drug mix \\
 \bottomrule
 \end{tabular}
 
@@ -425,7 +425,7 @@ The 41,775 pharmacies in the qualified database now have \textbf{measured, sourc
 
 \item \textbf{Every pharmacy has a conversation segment.} The CSV tells you whether to lead with GLP-1 losses, MFP cash flow, or DIR fee pressure --- based on that pharmacy's area characteristics, not a guess.
 
-\item \textbf{The financial model is per-pharmacy, not per-state.} Each row shows estimated fills, estimated losses, projected savings at \$275/month, and estimated ROI. This applies the same math from the GLP-1 Value Proposition to each pharmacy's area context. The base case (394 fills, \$37/fill, 5\% routing) yields \$465/month net --- higher-scoring pharmacies project higher because their area data suggests above-average GLP-1 volume.
+\item \textbf{The financial model is per-pharmacy, not per-state.} Each row shows estimated fills, estimated losses, projected savings at \$275/month, and estimated ROI. Fill estimates are exposure-weighted by prescriber proximity (CMS Part D data). Loss per fill is NADAC-weighted by state drug mix (\$46--\$56/fill). Higher-scoring pharmacies project higher because their area data suggests above-average GLP-1 volume.
 
 \item \textbf{Louisiana has 759 Immediate Outreach pharmacies} with an average estimated loss of $\sim$\$20K/month and 2.5x estimated ROI. This is Arica's home market, supported by the WVIPA relationship and association expansion strategy.
 
@@ -443,7 +443,7 @@ In the CSV, filter \texttt{outreach\_priority = ``Immediate Outreach''} and \tex
 \callout{Honest Framing}{%
 \textbf{What is measured:} NPI/pharmacy identity (NPPES\textsuperscript{8}), ZIP-level disease prevalence (CDC PLACES\textsuperscript{5}), \% 65+ and income (Census ACS\textsuperscript{6}), HPSA designations (HRSA\textsuperscript{7}), state-level GLP-1 claims and costs (CMS Medicare Part D\textsuperscript{3}, Medicaid SDUD\textsuperscript{4}).
 
-\textbf{What is estimated:} Per-pharmacy GLP-1 fill volume (derived from state CMS data indexed to the NCPA 394/month average,\textsuperscript{9} adjusted $\pm$15\% by area health burden), monthly loss (fills $\times$ \$37--\$42 NCPA loss/fill\textsuperscript{1,2}), savings (assumes 5\% routing rate from Value Proposition), and ROI (savings / \$3,300 annual subscription).
+\textbf{What is estimated:} Per-pharmacy GLP-1 fill volume (exposure-weighted from state CMS totals using prescriber proximity from Part D data), monthly loss (fills $\times$ NADAC-weighted loss/fill, \$46--\$56 by state drug mix), savings (assumes 5\% routing rate from Value Proposition), and ROI (savings / \$3,300 annual subscription).
 
 \textbf{Key assumptions in the estimation chain:} Government payers represent $\sim$55\% of GLP-1 volume; state index is capped at 1.5x national average; area disease burden adjusts fills $\pm$15\%; 5\% routing rate is the moderate scenario, not guaranteed.
 
