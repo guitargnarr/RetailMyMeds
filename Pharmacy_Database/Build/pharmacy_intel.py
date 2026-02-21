@@ -198,11 +198,14 @@ def _outreach_talking_points(pharmacy: dict) -> str:
     # MFP exposure
     points.append(
         "MFP program active since Jan 2026. "
-        "10 drugs in Cycle 1; 10 more coming Jan 2027 "
-        "(scaling to 50-60 total). "
+        "10 drugs in Cycle 1; 15 more coming Jan 2027 "
+        "(15 more in 2028, 20/year after -- scaling to 60+). "
         "Reimbursement lag: ~60 days vs. normal 2 weeks. "
         "Manufacturer rebates not being paid correctly -- "
         "pharmacies are not being made whole. "
+        "CMS BALANCE Model (Dec 2025) adds further "
+        "GLP-1 pricing pressure for Medicare Part D "
+        "starting 2027. "
         "Cash flow was already the #1 issue; "
         "MFP pours salt in the wound."
     )
