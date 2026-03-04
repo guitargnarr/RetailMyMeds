@@ -397,6 +397,42 @@ def api_states():
     })
 
 
+@app.route('/api/leads')
+@login_required
+def api_leads():
+    """Fetch scorecard submissions from Texume API."""
+    limit = request.args.get('limit', '50')
+    offset = request.args.get('offset', '0')
+    state = request.args.get('state', '')
+    sub_type = request.args.get('type', '')
+
+    params = {'limit': limit, 'offset': offset}
+    if state:
+        params['state'] = state
+    if sub_type:
+        params['type'] = sub_type
+
+    try:
+        resp = http_client.get(
+            f'{TEXUME_API_URL}/admin/submissions',
+            params=params,
+            timeout=15,
+        )
+        resp.raise_for_status()
+        return jsonify(resp.json())
+    except http_client.exceptions.Timeout:
+        return jsonify({
+            'error': 'Submissions service timed out.',
+        }), 504
+    except (
+        http_client.exceptions.ConnectionError,
+        http_client.exceptions.HTTPError,
+    ):
+        return jsonify({
+            'error': 'Could not reach submissions service.',
+        }), 502
+
+
 @app.route('/api/health')
 def api_health():
     """Health check."""

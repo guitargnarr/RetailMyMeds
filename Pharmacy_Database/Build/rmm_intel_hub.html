@@ -893,6 +893,189 @@
   }
 
   /* ============================================================
+     LEADS VIEW
+     ============================================================ */
+  .leads-view { display: none; }
+  .leads-view.active { display: block; }
+
+  .leads-header {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 24px 28px;
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  }
+  .leads-header::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--gold), var(--gold-light), transparent 60%);
+  }
+
+  .leads-title {
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.3px;
+    margin-bottom: 4px;
+  }
+
+  .leads-subtitle {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+  }
+
+  .leads-stats {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+
+  .leads-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .leads-stat-val {
+    font-family: var(--font-mono);
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--teal-dark);
+  }
+
+  .leads-stat-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .leads-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  .leads-table thead th {
+    padding: 10px 14px;
+    text-align: left;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid var(--border);
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+    background: var(--surface);
+    z-index: 2;
+  }
+
+  .leads-table tbody td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-secondary);
+    vertical-align: middle;
+  }
+
+  .leads-table tbody tr { cursor: default; transition: background 0.1s; }
+  .leads-table tbody tr:hover { background: var(--teal-50); }
+
+  .lead-pharmacy {
+    font-weight: 500;
+    color: var(--text-primary);
+  }
+
+  .lead-contact {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+
+  .lead-date {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+
+  .lead-email-link {
+    color: var(--teal);
+    text-decoration: none;
+    font-size: 12px;
+  }
+  .lead-email-link:hover { text-decoration: underline; }
+
+  .leads-empty {
+    text-align: center;
+    padding: 48px 24px;
+    color: var(--text-muted);
+    font-size: 14px;
+  }
+
+  .leads-empty-icon {
+    font-size: 32px;
+    margin-bottom: 12px;
+    opacity: 0.4;
+  }
+
+  .leads-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  .leads-page-btn {
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 500;
+    padding: 6px 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .leads-page-btn:hover { border-color: var(--teal); color: var(--teal-dark); }
+  .leads-page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* Nav tab for Leads in header */
+  .header-nav {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: 16px;
+  }
+
+  .header-nav-btn {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 500;
+    padding: 4px 12px;
+    border-radius: var(--radius-sm);
+    border: 1px solid transparent;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.45);
+    cursor: pointer;
+    letter-spacing: 0.3px;
+    transition: all 0.15s;
+  }
+  .header-nav-btn:hover { color: rgba(255, 255, 255, 0.7); background: rgba(255, 255, 255, 0.08); }
+  .header-nav-btn.active { color: var(--gold-light); border-color: rgba(212, 168, 83, 0.3); background: rgba(212, 168, 83, 0.1); }
+
+  /* ============================================================
      STATE DRILL-DOWN VIEW
      ============================================================ */
   .state-view { display: none; }
@@ -1101,6 +1284,10 @@
     </div>
     <div class="header-divider"></div>
     <div class="header-badge" id="headerBadge">--</div>
+    <div class="header-nav">
+      <button class="header-nav-btn active" id="navDatabase">Database</button>
+      <button class="header-nav-btn" id="navLeads">Leads</button>
+    </div>
   </div>
   <div class="header-stats" id="headerStats"></div>
   <a href="/logout" class="logout-btn" title="Sign Out">Sign Out</a>
@@ -1249,6 +1436,45 @@
     </div>
   </section>
 
+  <!-- LEADS VIEW -->
+  <section class="leads-view" id="leadsSection">
+    <div class="report-nav animate-in">
+      <button class="back-btn" id="leadsBackBtn">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 3L5 8l5 5"/></svg>
+        Database
+      </button>
+    </div>
+
+    <div class="leads-header animate-in animate-in-1" id="leadsHeader">
+      <div class="leads-title">Scorecard Leads</div>
+      <div class="leads-subtitle">Pharmacies that completed the qualification scorecard</div>
+      <div class="leads-stats" id="leadsStats"></div>
+    </div>
+
+    <div class="table-wrapper animate-in animate-in-2">
+      <div class="table-header">
+        <span class="table-title" id="leadsTableTitle">All Submissions</span>
+        <span class="table-count" id="leadsCount"></span>
+      </div>
+      <div style="max-height: 600px; overflow-y: auto;">
+        <table class="leads-table" id="leadsTable">
+          <thead>
+            <tr>
+              <th>Pharmacy</th>
+              <th>Grade</th>
+              <th class="num">Score</th>
+              <th>Location</th>
+              <th>Contact</th>
+              <th>Submitted</th>
+            </tr>
+          </thead>
+          <tbody id="leadsTableBody"></tbody>
+        </table>
+      </div>
+      <div class="leads-pagination" id="leadsPagination"></div>
+    </div>
+  </section>
+
 </main>
 
 <footer class="footer">
@@ -1272,6 +1498,7 @@ let currentPharmacies = [];
 let sortCol = 'score';
 let sortDir = 'desc';
 const stateSection = $('stateSection');
+const leadsSection = $('leadsSection');
 
 // URL routing
 function updateURL(params) {
@@ -1401,7 +1628,10 @@ async function loadReport(npi) {
   showLoading(true);
   overviewSection.style.display = 'none';
   stateSection.classList.remove('active');
+  leadsSection.classList.remove('active');
   reportSection.classList.add('active');
+  $('navDatabase').classList.add('active');
+  $('navLeads').classList.remove('active');
   updateURL({npi: npi});
 
   try {
@@ -1514,7 +1744,10 @@ async function loadStateView(state, grade) {
 
   overviewSection.style.display = 'none';
   reportSection.classList.remove('active');
+  leadsSection.classList.remove('active');
   stateSection.classList.add('active');
+  $('navDatabase').classList.add('active');
+  $('navLeads').classList.remove('active');
   const params = {state: state};
   if (grade) params.grade = grade;
   updateURL(params);
@@ -1620,10 +1853,13 @@ document.addEventListener('click', e => {
 function goHome() {
   reportSection.classList.remove('active');
   stateSection.classList.remove('active');
+  leadsSection.classList.remove('active');
   overviewSection.style.display = '';
   searchInput.value = '';
   currentStateCode = '';
   currentStateGrade = '';
+  $('navDatabase').classList.add('active');
+  $('navLeads').classList.remove('active');
   updateURL({});
 }
 
@@ -1735,6 +1971,113 @@ function renderScorecard(data, npi) {
   `;
   section.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
+
+// --- Leads tab ---
+
+let leadsOffset = 0;
+const leadsLimit = 50;
+let leadsTotal = 0;
+
+$('navLeads').addEventListener('click', () => {
+  $('navLeads').classList.add('active');
+  $('navDatabase').classList.remove('active');
+  overviewSection.style.display = 'none';
+  reportSection.classList.remove('active');
+  stateSection.classList.remove('active');
+  leadsSection.classList.add('active');
+  updateURL({view: 'leads'});
+  leadsOffset = 0;
+  loadLeads();
+});
+
+$('navDatabase').addEventListener('click', () => {
+  $('navDatabase').classList.add('active');
+  $('navLeads').classList.remove('active');
+  leadsSection.classList.remove('active');
+  goHome();
+});
+
+$('leadsBackBtn').addEventListener('click', () => {
+  $('navDatabase').classList.add('active');
+  $('navLeads').classList.remove('active');
+  leadsSection.classList.remove('active');
+  goHome();
+});
+
+async function loadLeads() {
+  showLoading(true);
+  try {
+    const resp = await fetch('/api/leads?limit=' + leadsLimit + '&offset=' + leadsOffset);
+    if (!resp.ok) {
+      const err = await resp.json();
+      throw new Error(err.error || 'Failed to load leads');
+    }
+    const data = await resp.json();
+    leadsTotal = data.total;
+    renderLeads(data);
+  } catch (e) {
+    $('leadsTableBody').innerHTML = '<tr><td colspan="6" class="leads-empty"><div class="leads-empty-icon">&#x26A0;</div>' + esc(e.message) + '</td></tr>';
+  } finally {
+    showLoading(false);
+  }
+}
+
+function renderLeads(data) {
+  const subs = data.submissions || [];
+
+  // Stats
+  const gradeA = subs.filter(s => s.overall_grade === 'A').length;
+  const gradeB = subs.filter(s => s.overall_grade === 'B').length;
+  const withEmail = subs.filter(s => s.email_sent).length;
+
+  $('leadsStats').innerHTML =
+    '<div class="leads-stat"><div class="leads-stat-val">' + data.total + '</div><div class="leads-stat-label">Total Leads</div></div>' +
+    '<div class="leads-stat"><div class="leads-stat-val" style="color:var(--grade-a)">' + gradeA + '</div><div class="leads-stat-label">Grade A (this page)</div></div>' +
+    '<div class="leads-stat"><div class="leads-stat-val" style="color:var(--grade-b)">' + gradeB + '</div><div class="leads-stat-label">Grade B (this page)</div></div>' +
+    '<div class="leads-stat"><div class="leads-stat-val">' + withEmail + '</div><div class="leads-stat-label">Emails Sent (this page)</div></div>';
+
+  $('leadsCount').textContent = data.total + ' total';
+
+  if (!subs.length) {
+    $('leadsTableBody').innerHTML = '<tr><td colspan="6" class="leads-empty"><div class="leads-empty-icon">&#x1F4CB;</div>No scorecard submissions yet.<br>Leads will appear here as pharmacies complete the scorecard.</td></tr>';
+    $('leadsPagination').innerHTML = '';
+    return;
+  }
+
+  $('leadsTableBody').innerHTML = subs.map(s => {
+    const dateStr = s.created_at ? new Date(s.created_at).toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit'}) : '';
+    return '<tr>' +
+      '<td><div class="lead-pharmacy">' + esc(s.pharmacy_name) + '</div><div class="lead-contact">' + esc(s.owner_name || '') + '</div></td>' +
+      '<td><span class="grade-badge grade-' + (s.overall_grade || 'C') + '">' + (s.overall_grade || '--') + '</span></td>' +
+      '<td class="num" style="font-family:var(--font-mono);font-weight:600">' + (s.overall_score || '--') + '</td>' +
+      '<td>' + esc(s.city || '') + (s.state ? ', ' + s.state : '') + '</td>' +
+      '<td>' + (s.email ? '<a class="lead-email-link" href="mailto:' + esc(s.email) + '">' + esc(s.email) + '</a>' : '<span style="color:var(--text-dim)">--</span>') +
+        (s.phone ? '<div style="font-size:12px;color:var(--text-muted)">' + esc(s.phone) + '</div>' : '') + '</td>' +
+      '<td><div class="lead-date">' + dateStr + '</div>' +
+        (s.email_sent ? '<span style="font-size:11px;color:var(--grade-a)">Email sent</span>' : '') +
+        (s.pdf_generated ? '<span style="font-size:11px;color:var(--text-dim);margin-left:6px">PDF</span>' : '') + '</td>' +
+    '</tr>';
+  }).join('');
+
+  // Pagination
+  const page = Math.floor(leadsOffset / leadsLimit) + 1;
+  const totalPages = Math.ceil(data.total / leadsLimit);
+  $('leadsPagination').innerHTML =
+    '<button class="leads-page-btn" id="leadsPrev" ' + (leadsOffset === 0 ? 'disabled' : '') + '>Previous</button>' +
+    '<span>Page ' + page + ' of ' + totalPages + '</span>' +
+    '<button class="leads-page-btn" id="leadsNext" ' + (leadsOffset + leadsLimit >= data.total ? 'disabled' : '') + '>Next</button>';
+
+  $('leadsPrev').addEventListener('click', () => { leadsOffset = Math.max(0, leadsOffset - leadsLimit); loadLeads(); });
+  $('leadsNext').addEventListener('click', () => { leadsOffset += leadsLimit; loadLeads(); });
+}
+
+// Route to leads view if URL has ?view=leads
+(function () {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('view') === 'leads') {
+    $('navLeads').click();
+  }
+})();
 
 function esc(s) { if (!s) return ''; const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 function fmtDollar(val) { if (!val || val === 'N/A') return 'N/A'; const n = Number(val); if (isNaN(n)) return val; return '$' + Math.round(n).toLocaleString(); }
