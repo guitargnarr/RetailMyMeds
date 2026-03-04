@@ -1,0 +1,20 @@
+[flake8]
+max-line-length = 127
+ignore = E203,W503
+exclude =
+    .venv,venv,env,node_modules,__pycache__,dist,build,
+    Pharmacy_Database/Build/build_glp1_exposure_index.py,
+    Pharmacy_Database/Build/download_partd_prescribers.py,
+    Pharmacy_Database/Build/fix_roi_multiple.py,
+    Pharmacy_Database/Build/validate_exposure_pipeline.py,
+    Pharmacy_Database/Build/validate_real_pharmacies.py,
+    Pharmacy_Database/Build/verify_all_pharmacies.py,
+    Pharmacy_Database/Build/dedup_pharmacies.py,
+    Pharmacy_Database/Build/enrich_pharmacies.py,
+    Pharmacy_Database/Build/extract_independent_pharmacies.py,
+    Pharmacy_Database/Build/score_pharmacies.py,
+    Pharmacy_Database/Build/compute_glp1_loss_per_fill.py,
+    Pharmacy_Database/Build/mirador_chain.py,
+    Pharmacy_Database/Build/rucc_enrich.py,
+    Pharmacy_Database/Build/fact_validator.py,
+    State_Outreach_Lists/slice_by_state.py
